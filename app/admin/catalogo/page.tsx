@@ -51,21 +51,24 @@ export default async function CatalogoPage() {
               </tr>
             </thead>
             <tbody className="divide-y divide-gray-100">
-              {produtos.map((p) => (
-                <tr key={p.id} className="hover:bg-gray-50">
-                  <td className="px-4 py-3 font-mono text-xs text-gray-700">{p.sku}</td>
-                  <td className="px-4 py-3">
-                    <span className="rounded-full bg-blue-50 px-2 py-0.5 text-xs font-medium text-blue-700">
-                      {LABEL_CATEGORIA[p.categoria]}
-                    </span>
-                  </td>
-                  <td className="px-4 py-3">{p.fabricante}</td>
-                  <td className="px-4 py-3">{p.modelo}</td>
-                  <td className="px-4 py-3">{p.potencia_w ?? "—"}</td>
-                  <td className="px-4 py-3">{p.num_mppt ?? "—"}</td>
-                  <td className="px-4 py-3">{p.num_fases ?? "—"}</td>
-                </tr>
-              ))}
+              {produtos.map((p) => {
+                const attrs = p.atributos as Record<string, any> || {};
+                return (
+                  <tr key={p.id} className="hover:bg-gray-50">
+                    <td className="px-4 py-3 font-mono text-xs text-gray-700">{p.sku}</td>
+                    <td className="px-4 py-3">
+                      <span className="rounded-full bg-blue-50 px-2 py-0.5 text-xs font-medium text-blue-700">
+                        {LABEL_CATEGORIA[p.categoria as keyof typeof LABEL_CATEGORIA]}
+                      </span>
+                    </td>
+                    <td className="px-4 py-3">{attrs.fabricante ?? "—"}</td>
+                    <td className="px-4 py-3">{attrs.modelo ?? "—"}</td>
+                    <td className="px-4 py-3">{attrs.potencia_w ?? "—"}</td>
+                    <td className="px-4 py-3">{attrs.num_mppt ?? "—"}</td>
+                    <td className="px-4 py-3">{attrs.num_fases ?? "—"}</td>
+                  </tr>
+                );
+              })}
             </tbody>
           </table>
         </div>

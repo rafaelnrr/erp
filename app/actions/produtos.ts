@@ -23,11 +23,9 @@ export async function listarProdutos(
   let query = supabase
     .from("produtos")
     .select(
-      "id, sku, categoria, fabricante, modelo, ativo, potencia_w, num_mppt, num_fases, atributos"
+      "id, sku, categoria, atributos"
     )
-    .eq("ativo", true)
-    .order("categoria", { ascending: true })
-    .order("fabricante", { ascending: true });
+    .order("categoria", { ascending: true });
 
   if (categoria) {
     query = query.eq("categoria", categoria);
