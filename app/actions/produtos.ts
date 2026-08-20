@@ -1,19 +1,9 @@
 "use server";
 
 import { createClient } from "@/utils/supabase/server";
+import type { Database } from "@/types/supabase";
 
-export type Produto = {
-  id: string;
-  sku: string;
-  categoria: "modulo" | "inversor" | "estrutura" | "string_box" | "cabo" | "acessorio";
-  fabricante: string;
-  modelo: string;
-  ativo: boolean;
-  potencia_w: number | null;
-  num_mppt: number | null;
-  num_fases: number | null;
-  atributos: Record<string, unknown>;
-};
+export type Produto = Database["public"]["Tables"]["produtos"]["Row"];
 
 type ListarProdutosResult =
   | { ok: true; data: Produto[] }
