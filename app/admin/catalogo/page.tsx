@@ -1,3 +1,4 @@
+import Link from "next/link";
 import { listarProdutos, type Produto } from "@/app/actions/produtos";
 
 const LABEL_CATEGORIA: Record<Produto["categoria"], string> = {
@@ -25,10 +26,16 @@ export default async function CatalogoPage() {
   return (
     <main className="p-8">
       <div className="mb-6 flex items-center justify-between">
-        <h1 className="text-xl font-semibold">Catálogo de Produtos</h1>
-        <span className="text-sm text-gray-500">
-          {produtos.length} {produtos.length === 1 ? "item" : "itens"}
-        </span>
+        <div>
+          <h1 className="text-xl font-semibold">Catálogo de Produtos</h1>
+          <p className="text-sm text-gray-500">Gerencie módulos, inversores e componentes</p>
+        </div>
+        <Link
+          href="/admin/produtos/novo"
+          className="rounded bg-blue-600 px-4 py-2 text-sm font-semibold text-white hover:bg-blue-700"
+        >
+          + Novo Produto
+        </Link>
       </div>
 
       {produtos.length === 0 ? (

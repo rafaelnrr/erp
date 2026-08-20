@@ -40,3 +40,28 @@ export async function listarProdutos(
 
   return { ok: true, data: data as Produto[] };
 }
+
+export async function criarProduto(formData: FormData) {
+  const supabase = await createClient();
+  const sku = formData.get("sku") as string;
+  const categoria = formData.get("categoria") as string;
+  const fabricante = formData.get("fabricante") as string;
+  const modelo = formData.get("modelo") as string;
+  const potencia = Number(formData.get("potencia_w"));
+
+  const atributos = {
+    fabricante,
+    modelo,
+    ...(potencia > 0 && { potencia_w: potencia })
+  };
+
+  const { error } = await supabase.from("produtos").insert({
+    sku,
+    categoria: categoria as any,
+    atributos
+  });
+
+  if (error) return { error: error.message };
+  
+  return { success: true };
+}
