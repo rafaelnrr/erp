@@ -10,12 +10,15 @@ export default function LoginPage() {
   const [error, setError] = useState<string | null>(null);
   const [loading, setLoading] = useState(false);
   const router = useRouter();
-  const supabase = createClient();
 
   async function handleLogin(e: React.FormEvent) {
     e.preventDefault();
     setLoading(true);
     setError(null);
+
+    // Instancia o cliente apenas no browser (ao submeter o form),
+    // evitando erro de prerender do servidor sem as env vars.
+    const supabase = createClient();
 
     const { error } = await supabase.auth.signInWithPassword({
       email,
