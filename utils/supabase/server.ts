@@ -1,17 +1,11 @@
 import { createServerClient } from "@supabase/ssr";
 import { cookies } from "next/headers";
+import type { Database } from "@/types/supabase";
 
-/**
- * Client Supabase para uso em Server Components, Server Actions e
- * Route Handlers. Lê/escreve cookies de sessão via next/headers.
- *
- * IMPORTANTE: chame createClient() a cada request — nunca reutilize
- * uma instância entre requests diferentes (cookies mudam por usuário).
- */
 export async function createClient() {
   const cookieStore = await cookies();
 
-  return createServerClient(
+  return createServerClient<Database>(
     process.env.NEXT_PUBLIC_SUPABASE_URL!,
     process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!,
     {
