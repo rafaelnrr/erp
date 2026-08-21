@@ -245,7 +245,7 @@ export function ConstrutorProposta({
             {aba === "equipamentos" && (
               <div>
                 <div className="flex items-center justify-between mb-3">
-                  <h2 className="font-medium text-gray-800">Escopo de Fornecimento</h2>
+                  <h2 className="font-medium text-slate-800">Escopo de Fornecimento</h2>
                   {!travado && (
                     <button
                       onClick={() => setDimensionadorAberto(true)}
@@ -255,49 +255,78 @@ export function ConstrutorProposta({
                     </button>
                   )}
                 </div>
-                <div className="divide-y rounded-lg border">
-                  {itens.length === 0 && <p className="p-4 text-sm text-gray-500">Nenhum item adicionado.</p>}
-                  {itens.map((item) => {
-                    const precoEditado = item.preco_unitario !== item.preco_catalogo;
-                    return (
-                      <div key={item.id} className="flex items-center gap-3 p-3">
-                        <span className="flex-1 text-sm text-gray-800">{item.descricao}</span>
-                        <input
-                          type="number"
-                          value={item.quantidade}
-                          disabled={travado}
-                          onChange={(e) => handleQuantidade(item, Number(e.target.value))}
-                          className="w-16 rounded border p-1.5 text-sm text-right disabled:bg-gray-50 disabled:text-gray-400"
-                        />
-                        <div className="flex items-center gap-1 w-24">
-                          <input
-                            type="number"
-                            value={item.preco_unitario}
-                            disabled={travado}
-                            title={precoEditado ? `Preço de catálogo: ${formatBRL(item.preco_catalogo)}` : undefined}
-                            onChange={(e) => handlePreco(item, Number(e.target.value))}
-                            className={`w-full rounded border p-1.5 text-sm text-right disabled:bg-gray-50 disabled:text-gray-400 ${
-                              precoEditado ? "border-amber-400 bg-amber-50" : ""
-                            }`}
-                          />
-                          {precoEditado && <span className="text-amber-500 text-xs" title="Preço alterado do catálogo">✎</span>}
-                        </div>
-                        <span className="w-24 text-right text-sm font-medium text-gray-700">{formatBRL(item.quantidade * item.preco_unitario)}</span>
-                        {!travado && (
-                          <button onClick={() => handleRemoverItem(item.id)} className="text-red-500 text-xs">
-                            remover
-                          </button>
-                        )}
-                      </div>
-                    );
-                  })}
-                </div>
 
-                {!travado && (
-                  <div className="mt-3">
-                    <ProdutoCombobox produtos={catalogoProdutos as any} onSelecionar={handleAdicionarProduto} />
-                  </div>
-                )}
+                <div className="overflow-hidden rounded-lg border border-slate-200">
+                  <table className="w-full text-sm">
+                    <thead className="bg-slate-50">
+                      <tr>
+                        <th className="px-3 py-2.5 text-left font-medium text-slate-500">Produto</th>
+                        <th className="w-20 px-3 py-2.5 text-right font-medium text-slate-500">Qtd.</th>
+                        <th className="w-32 px-3 py-2.5 text-right font-medium text-slate-500">Preço Unit.</th>
+                        <th className="w-28 px-3 py-2.5 text-right font-medium text-slate-500">Subtotal</th>
+                        <th className="w-16 px-3 py-2.5"></th>
+                      </tr>
+                    </thead>
+                    <tbody className="divide-y divide-slate-100 bg-white">
+                      {itens.length === 0 && (
+                        <tr>
+                          <td colSpan={5} className="px-3 py-6 text-center text-slate-400">
+                            Nenhum item adicionado.
+                          </td>
+                        </tr>
+                      )}
+                      {itens.map((item) => {
+                        const precoEditado = item.preco_unitario !== item.preco_catalogo;
+                        return (
+                          <tr key={item.id}>
+                            <td className="px-3 py-2 align-middle text-slate-800">{item.descricao}</td>
+                            <td className="px-3 py-2 align-middle">
+                              <input
+                                type="number"
+                                value={item.quantidade}
+                                disabled={travado}
+                                onChange={(e) => handleQuantidade(item, Number(e.target.value))}
+                                className="w-full rounded-md border border-slate-300 px-2 py-1.5 text-right text-sm outline-none focus:border-blue-500 focus:ring-2 focus:ring-blue-500/30 disabled:bg-slate-50 disabled:text-slate-400"
+                              />
+                            </td>
+                            <td className="px-3 py-2 align-middle">
+                              <div className="flex items-center gap-1">
+                                <input
+                                  type="number"
+                                  value={item.preco_unitario}
+                                  disabled={travado}
+                                  title={precoEditado ? `Preço de catálogo: ${formatBRL(item.preco_catalogo)}` : undefined}
+                                  onChange={(e) => handlePreco(item, Number(e.target.value))}
+                                  className={`w-full rounded-md border px-2 py-1.5 text-right text-sm outline-none focus:border-blue-500 focus:ring-2 focus:ring-blue-500/30 disabled:bg-slate-50 disabled:text-slate-400 ${
+                                    precoEditado ? "border-amber-400 bg-amber-50" : "border-slate-300"
+                                  }`}
+                                />
+                                {precoEditado && (
+                                  <span className="text-amber-500 text-xs shrink-0" title="Preço alterado do catálogo">✎</span>
+                                )}
+                              </div>
+                            </td>
+                            <td className="px-3 py-2 align-middle text-right font-medium text-slate-700">
+                              {formatBRL(item.quantidade * item.preco_unitario)}
+                            </td>
+                            <td className="px-3 py-2 align-middle text-right">
+                              {!travado && (
+                                <button onClick={() => handleRemoverItem(item.id)} className="text-red-500 text-xs hover:underline">
+                                  remover
+                                </button>
+                              )}
+                            </td>
+                          </tr>
+                        );
+                      })}
+                    </tbody>
+                  </table>
+                  {!travado && (
+                    <div className="border-t border-slate-200 p-3">
+                      <ProdutoCombobox produtos={catalogoProdutos as any} onSelecionar={handleAdicionarProduto} />
+                    </div>
+                  )}
+                </div>
               </div>
             )}
 

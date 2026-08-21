@@ -16,9 +16,9 @@ export interface Database {
   public: {
     Tables: {
       perfis: {
-        Row: { id: string; role: "admin" | "comercial"; email: string | null };
-        Insert: { id: string; role: "admin" | "comercial"; email?: string | null };
-        Update: { id?: string; role?: "admin" | "comercial"; email?: string | null };
+        Row: { id: string; role: "admin" | "editor" | "visualizador"; email: string | null; nome: string | null };
+        Insert: { id: string; role: "admin" | "editor" | "visualizador"; email?: string | null; nome?: string | null };
+        Update: { id?: string; role?: "admin" | "editor" | "visualizador"; email?: string | null; nome?: string | null };
       };
       clientes: {
         Row: {
