@@ -2,7 +2,7 @@ import type { Metadata } from "next";
 import "./globals.css";
 
 export const metadata: Metadata = {
-  title: "ERP Fotovoltaico",
+  title: "SolarFlow Pro",
   description: "Sistema interno de dimensionamento e propostas FV",
 };
 

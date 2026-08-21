@@ -29,14 +29,14 @@ export default function LoginPage() {
       setError("E-mail ou senha inválidos.");
       setLoading(false);
     } else {
-      router.push("/admin/catalogo");
+      router.push("/admin");
     }
   }
 
   return (
     <main className="flex min-h-screen items-center justify-center bg-gray-50 p-4">
       <div className="w-full max-w-sm rounded-2xl bg-white p-8 shadow">
-        <h1 className="mb-6 text-2xl font-bold text-gray-800">ERP Fotovoltaico</h1>
+        <h1 className="mb-6 text-2xl font-bold text-gray-800">SolarFlow Pro</h1>
         <form onSubmit={handleLogin} className="flex flex-col gap-4">
           <div>
             <label className="mb-1 block text-sm font-medium text-gray-700">
