@@ -1,10 +1,75 @@
-export default function PropostasPage() {
+import { listarPropostas } from "@/app/actions/propostas";
+import { StatusPropostaSelect } from "@/components/StatusPropostaSelect";
+
+const LABEL_STATUS: Record<string, string> = {
+  gerada: "Gerada",
+  enviada: "Enviada",
+  aceita: "Aceita",
+  recusada: "Recusada",
+  expirada: "Expirada",
+};
+
+export default async function PropostasPage() {
+  const result = await listarPropostas();
+  const propostas = result.data;
+
   return (
     <main className="p-8">
-      <h1 className="text-xl font-semibold text-gray-800">Orçamentos e Propostas</h1>
-      <p className="mt-1 text-sm text-gray-500">
-        Em construção — geração de propostas com snapshot imutável e PDF chega na próxima entrega.
-      </p>
+      <div className="mb-6">
+        <h1 className="text-xl font-semibold text-gray-800">Orçamentos e Propostas</h1>
+        <p className="mt-1 text-sm text-gray-500">
+          Propostas são geradas a partir de um Dimensionamento salvo — vá em Dimensionamento Inteligente, calcule
+          para um cliente e clique em "Gerar Proposta".
+        </p>
+      </div>
+
+      <div className="overflow-hidden rounded-lg border bg-white shadow-sm">
+        <table className="min-w-full divide-y divide-gray-200 text-sm">
+          <thead className="bg-gray-50">
+            <tr>
+              <th className="px-4 py-3 text-left font-medium text-gray-600">Nº</th>
+              <th className="px-4 py-3 text-left font-medium text-gray-600">Cliente</th>
+              <th className="px-4 py-3 text-left font-medium text-gray-600">Valor Estimado</th>
+              <th className="px-4 py-3 text-left font-medium text-gray-600">Status</th>
+              <th className="px-4 py-3 text-left font-medium text-gray-600">Data</th>
+              <th className="px-4 py-3 text-left font-medium text-gray-600">Ações</th>
+            </tr>
+          </thead>
+          <tbody className="divide-y divide-gray-100">
+            {propostas.length === 0 ? (
+              <tr>
+                <td colSpan={6} className="px-4 py-8 text-center text-gray-500">
+                  Nenhuma proposta gerada ainda.
+                </td>
+              </tr>
+            ) : (
+              propostas.map((p) => (
+                <tr key={p.id} className="hover:bg-gray-50">
+                  <td className="px-4 py-3 font-mono text-xs text-gray-700">#{p.numero}</td>
+                  <td className="px-4 py-3 font-medium text-gray-800">{p.clientes?.nome ?? "—"}</td>
+                  <td className="px-4 py-3 text-gray-600">
+                    {Number(p.valor_total ?? 0).toLocaleString("pt-BR", { style: "currency", currency: "BRL" })}
+                  </td>
+                  <td className="px-4 py-3">
+                    <StatusPropostaSelect id={p.id} statusAtual={p.status} labels={LABEL_STATUS} />
+                  </td>
+                  <td className="px-4 py-3 text-gray-500 text-xs">{new Date(p.criado_em).toLocaleDateString("pt-BR")}</td>
+                  <td className="px-4 py-3">
+                    <a
+                      href={`/api/propostas/${p.id}/pdf`}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="text-blue-600 hover:underline text-xs font-medium"
+                    >
+                      Gerar PDF
+                    </a>
+                  </td>
+                </tr>
+              ))
+            )}
+          </tbody>
+        </table>
+      </div>
     </main>
   );
 }

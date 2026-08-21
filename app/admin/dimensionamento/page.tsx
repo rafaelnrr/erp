@@ -2,6 +2,7 @@
 
 import { useEffect, useState } from "react";
 import { listarClientes } from "@/app/actions/clientes";
+import { criarProposta } from "@/app/actions/propostas";
 import {
   calcularDimensionamento,
   listarCatalogoParaDimensionamento,
@@ -43,6 +44,9 @@ export default function DimensionamentoPage() {
   const [erros, setErros] = useState<string[]>([]);
   const [resultado, setResultado] = useState<DimensionamentoResultado | null>(null);
   const [salvo, setSalvo] = useState(false);
+  const [dimensionamentoId, setDimensionamentoId] = useState<string | null>(null);
+  const [proposta, setProposta] = useState<{ id: string; numero: number } | null>(null);
+  const [gerandoProposta, setGerandoProposta] = useState(false);
 
   useEffect(() => {
     listarClientes().then((r) => setClientes((r.data as Cliente[]) || []));
@@ -60,6 +64,8 @@ export default function DimensionamentoPage() {
   async function handleCalcular() {
     setLoading(true);
     setSalvo(false);
+    setProposta(null);
+    setDimensionamentoId(null);
     const res = await calcularDimensionamento({
       cliente_id: clienteId || undefined,
       consumo_kwh_mes: consumo,
@@ -81,6 +87,15 @@ export default function DimensionamentoPage() {
     setErros([]);
     setResultado(res.data);
     setSalvo(!!res.dimensionamento_id);
+    setDimensionamentoId(res.dimensionamento_id);
+  }
+
+  async function handleGerarProposta() {
+    if (!dimensionamentoId) return;
+    setGerandoProposta(true);
+    const res = await criarProposta(dimensionamentoId);
+    setGerandoProposta(false);
+    if (res.success) setProposta({ id: res.id, numero: res.numero });
   }
 
   function handleClienteChange(id: string) {
@@ -192,6 +207,25 @@ export default function DimensionamentoPage() {
             </button>
             {salvo && (
               <p className="mt-3 text-[13px] text-[#86efac]">Dimensionamento salvo para o cliente selecionado.</p>
+            )}
+            {salvo && !proposta && (
+              <button
+                onClick={handleGerarProposta}
+                disabled={gerandoProposta}
+                className="w-full border border-[#334155] mt-3 p-3 rounded-[11px] bg-transparent text-[#86efac] font-semibold cursor-pointer text-[14px] hover:bg-[#0b1220] disabled:opacity-60"
+              >
+                {gerandoProposta ? "Gerando proposta..." : "Gerar Proposta"}
+              </button>
+            )}
+            {proposta && (
+              <a
+                href={`/api/propostas/${proposta.id}/pdf`}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="block w-full text-center border border-[#22c55e] mt-3 p-3 rounded-[11px] bg-[#052e16] text-[#86efac] font-semibold text-[14px]"
+              >
+                Proposta #{proposta.numero} gerada — abrir PDF
+              </a>
             )}
           </section>
 
