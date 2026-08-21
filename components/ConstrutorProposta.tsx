@@ -87,6 +87,7 @@ export function ConstrutorProposta({
   const [parcelas, setParcelas] = useState(propostaInicial.parcelas ?? 1);
   const [validadeDias, setValidadeDias] = useState(propostaInicial.validade_dias ?? 10);
   const [prazoInstalacao, setPrazoInstalacao] = useState(propostaInicial.prazo_instalacao_dias ?? 15);
+  const [descontoAvista, setDescontoAvista] = useState(propostaInicial.desconto_avista_pct ?? 3);
 
   const [servicoSelecionadoId, setServicoSelecionadoId] = useState("");
   const [finalizando, setFinalizando] = useState(false);
@@ -188,6 +189,7 @@ export function ConstrutorProposta({
       parcelas: formaPagamento === "financiado" ? Number(parcelas) : null,
       validade_dias: Number(validadeDias),
       prazo_instalacao_dias: Number(prazoInstalacao),
+      desconto_avista_pct: Number(descontoAvista),
     });
   }
 
@@ -410,6 +412,20 @@ export function ConstrutorProposta({
                     <label className="mb-1 block text-xs text-gray-500">Prazo de Instalação (dias)</label>
                     <input type="number" value={prazoInstalacao} disabled={travado} onChange={(e) => setPrazoInstalacao(Number(e.target.value))} className="w-full rounded-lg border p-2.5 text-sm" />
                   </div>
+                </div>
+                <div>
+                  <label className="mb-1 block text-xs text-gray-500">Desconto à Vista (%)</label>
+                  <input
+                    type="number"
+                    step="0.1"
+                    value={descontoAvista}
+                    disabled={travado}
+                    onChange={(e) => setDescontoAvista(Number(e.target.value))}
+                    className="w-full rounded-lg border p-2.5 text-sm"
+                  />
+                  <span className="mt-1 block text-[11px] text-gray-400">
+                    Aparece no PDF como "À Vista" — valor com desconto sobre o investimento total.
+                  </span>
                 </div>
                 {!travado && (
                   <button onClick={handleSalvarCondicoes} className="self-start rounded-lg border px-4 py-2 text-sm text-gray-700 hover:bg-gray-50">

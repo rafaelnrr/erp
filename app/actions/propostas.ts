@@ -34,19 +34,27 @@ export interface ProposalSnapshot {
     qtde_modulos: number;
     potencia_instalada_kwp: number | null;
     tipo_ligacao: string | null;
+    hsp: number | null;
+    perdas_pct: number | null;
+    area_estimada_m2: number | null;
   } | null;
   itens: SnapshotItem[];
   servicos: SnapshotServico[];
   valor_itens: number;
   valor_servicos_unicos: number;
   valor_total: number;
+  desconto_avista_pct: number;
+  valor_avista: number;
   condicoes_pagamento: string | null;
   forma_pagamento: string | null;
   parcelas: number | null;
   validade_dias: number;
   prazo_instalacao_dias: number | null;
   economia_estimada_ano1: number | null;
+  economia_mensal: number | null;
+  economia_total_30_anos: number | null;
   payback_meses: number | null;
+  nome_vendedor: string | null;
   gerado_em: string;
 }
 
@@ -166,7 +174,7 @@ export async function listarPropostaCompleta(propostaId: string) {
 
   const { data: proposta, error } = await supabase
     .from("propostas")
-    .select("*, clientes(nome, documento, cidade, uf, consumo_kwh_mes, grupo_tarifario, classe_b, subgrupo_a, tarifa_kwh, tarifa_kwh_fora_ponta), dimensionamentos(consumo_alvo, geracao_estimada, qtde_modulos, tipo_ligacao)")
+    .select("*, clientes(nome, documento, cidade, uf, consumo_kwh_mes, grupo_tarifario, classe_b, subgrupo_a, tarifa_kwh, tarifa_kwh_fora_ponta), dimensionamentos(consumo_alvo, geracao_estimada, qtde_modulos, tipo_ligacao, hsp, perdas_pct, area_estimada_m2)")
     .eq("id", propostaId)
     .single();
 
@@ -216,7 +224,14 @@ export async function removerServicoProposta(servicoPropostaId: string) {
 
 export async function atualizarCondicoesProposta(
   propostaId: string,
-  campos: { condicoes_pagamento?: string; forma_pagamento?: string; parcelas?: number | null; validade_dias?: number; prazo_instalacao_dias?: number }
+  campos: {
+    condicoes_pagamento?: string;
+    forma_pagamento?: string;
+    parcelas?: number | null;
+    validade_dias?: number;
+    prazo_instalacao_dias?: number;
+    desconto_avista_pct?: number;
+  }
 ) {
   const supabase = await createClient();
   const { error } = await supabase.from("propostas").update(campos).eq("id", propostaId);
@@ -273,6 +288,15 @@ export async function finalizarProposta(propostaId: string) {
 
   const { economiaAno1, paybackMeses } = calcularEconomiaEPayback(cliente, dimensionamento?.geracao_estimada, valorTotal);
 
+  const descontoAvistaPct = Number(proposta.desconto_avista_pct ?? 0);
+  const valorAvista = valorTotal * (1 - descontoAvistaPct / 100);
+
+  const economiaMensal = economiaAno1 ? economiaAno1 / 12 : null;
+  // projeção de 30 anos com reajuste anual de 4% sobre a economia (série geométrica)
+  const economiaTotal30Anos = economiaAno1 ? economiaAno1 * ((Math.pow(1.04, 30) - 1) / 0.04) : null;
+
+  const { data: perfilVendedor } = await supabase.from("perfis").select("nome").eq("id", proposta.vendedor_id).single();
+
   const snapshot: ProposalSnapshot = {
     titulo: proposta.titulo ?? null,
     cliente: {
@@ -291,6 +315,9 @@ export async function finalizarProposta(propostaId: string) {
           qtde_modulos: dimensionamento.qtde_modulos,
           potencia_instalada_kwp: potenciaInstaladaKwp,
           tipo_ligacao: dimensionamento.tipo_ligacao,
+          hsp: dimensionamento.hsp ?? null,
+          perdas_pct: dimensionamento.perdas_pct ?? null,
+          area_estimada_m2: dimensionamento.area_estimada_m2 ?? null,
         }
       : null,
     itens: snapshotItens,
@@ -298,13 +325,18 @@ export async function finalizarProposta(propostaId: string) {
     valor_itens: valorItens,
     valor_servicos_unicos: valorServicosUnicos,
     valor_total: valorTotal,
+    desconto_avista_pct: descontoAvistaPct,
+    valor_avista: valorAvista,
     condicoes_pagamento: proposta.condicoes_pagamento,
     forma_pagamento: proposta.forma_pagamento,
     parcelas: proposta.parcelas,
     validade_dias: proposta.validade_dias,
     prazo_instalacao_dias: proposta.prazo_instalacao_dias,
     economia_estimada_ano1: economiaAno1,
+    economia_mensal: economiaMensal,
+    economia_total_30_anos: economiaTotal30Anos,
     payback_meses: paybackMeses,
+    nome_vendedor: perfilVendedor?.nome ?? null,
     gerado_em: new Date().toISOString(),
   };
 

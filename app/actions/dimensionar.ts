@@ -240,6 +240,9 @@ export async function calcularDimensionamento(
         qtde_modulos: sugestao.qtde_modulos,
         qtde_inversores: sugestao.qtde_inversores,
         tipo_ligacao: input.tipo_ligacao ?? null,
+        hsp: input.hsp,
+        perdas_pct: input.perdas_pct,
+        area_estimada_m2: areaEstimadaM2,
       })
       .select("id")
       .single();
