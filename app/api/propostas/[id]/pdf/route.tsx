@@ -69,9 +69,11 @@ function PropostaPdf({ numero, snapshot, criadoEm }: { numero: number; snapshot:
   const dataFormatada = new Date(criadoEm).toLocaleDateString("pt-BR");
   const validadeData = new Date(new Date(criadoEm).getTime() + (snapshot.validade_dias ?? 10) * 86400000).toLocaleDateString("pt-BR");
   const dim = snapshot.dimensionamento;
+  const itens = snapshot.itens ?? [];
+  const servicos = snapshot.servicos ?? [];
 
-  const servicosUnicos = snapshot.servicos.filter((s: any) => s.recorrencia === "unico");
-  const servicosRecorrentes = snapshot.servicos.filter((s: any) => s.recorrencia !== "unico");
+  const servicosUnicos = servicos.filter((s: any) => s.recorrencia === "unico");
+  const servicosRecorrentes = servicos.filter((s: any) => s.recorrencia !== "unico");
 
   return (
     <Document>
@@ -93,9 +95,9 @@ function PropostaPdf({ numero, snapshot, criadoEm }: { numero: number; snapshot:
         <View style={styles.infoGrid}>
           <View style={styles.infoBlock}>
             <Text style={styles.sectionLabel}>Cliente</Text>
-            <Text style={styles.clienteNome}>{snapshot.cliente.nome}</Text>
-            {snapshot.cliente.documento && <Text style={styles.clienteLinha}>{snapshot.cliente.documento}</Text>}
-            {snapshot.cliente.cidade && <Text style={styles.clienteLinha}>{snapshot.cliente.cidade}/{snapshot.cliente.uf}</Text>}
+            <Text style={styles.clienteNome}>{snapshot.cliente?.nome ?? "—"}</Text>
+            {snapshot.cliente?.documento && <Text style={styles.clienteLinha}>{snapshot.cliente.documento}</Text>}
+            {snapshot.cliente?.cidade && <Text style={styles.clienteLinha}>{snapshot.cliente.cidade}/{snapshot.cliente.uf}</Text>}
           </View>
           <View style={styles.infoBlock}>
             <Text style={styles.sectionLabel}>Resumo do Sistema</Text>
@@ -145,18 +147,18 @@ function PropostaPdf({ numero, snapshot, criadoEm }: { numero: number; snapshot:
             <Text style={[styles.headerText, styles.colUnit]}>Preço Unit.</Text>
             <Text style={[styles.headerText, styles.colSub]}>Subtotal</Text>
           </View>
-          {snapshot.itens.map((item: any, i: number) => (
+          {itens.map((item: any, i: number) => (
             <View key={i} style={styles.tableRow}>
               <Text style={styles.colDesc}>{item.descricao}</Text>
               <Text style={styles.colQtd}>{item.quantidade}</Text>
-              <Text style={styles.colUnit}>{formatBRL(item.preco_unitario)}</Text>
-              <Text style={styles.colSub}>{formatBRL(item.subtotal)}</Text>
+              <Text style={styles.colUnit}>{formatBRL(item.preco_unitario ?? 0)}</Text>
+              <Text style={styles.colSub}>{formatBRL(item.subtotal ?? 0)}</Text>
             </View>
           ))}
         </View>
 
         {/* SERVIÇOS */}
-        {snapshot.servicos.length > 0 && (
+        {servicos.length > 0 && (
           <View style={styles.section}>
             <View style={styles.servicosGrid}>
               <View style={styles.servicosCol}>
@@ -187,7 +189,7 @@ function PropostaPdf({ numero, snapshot, criadoEm }: { numero: number; snapshot:
         <View style={styles.investimento}>
           <View style={styles.investimentoTopo}>
             <Text style={styles.investimentoLabel}>Investimento Total</Text>
-            <Text style={styles.investimentoValor}>{formatBRL(snapshot.valor_total)}</Text>
+            <Text style={styles.investimentoValor}>{formatBRL(snapshot.valor_total ?? 0)}</Text>
           </View>
           <View style={styles.condicoesGrid}>
             <View style={styles.condicaoCol}>
