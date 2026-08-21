@@ -16,12 +16,19 @@ export default async function PropostasPage() {
 
   return (
     <main className="p-8">
-      <div className="mb-6">
-        <h1 className="text-xl font-semibold text-gray-800">Orçamentos e Propostas</h1>
-        <p className="mt-1 text-sm text-gray-500">
-          Propostas nascem de um Dimensionamento salvo — vá em Dimensionamento Inteligente, calcule para um cliente
-          e clique em "Gerar Proposta" para abrir o Construtor.
-        </p>
+      <div className="mb-6 flex items-center justify-between">
+        <div>
+          <h1 className="text-xl font-semibold text-gray-800">Orçamentos e Propostas</h1>
+          <p className="mt-1 text-sm text-gray-500">
+            Toda proposta nasce de um Dimensionamento salvo para um cliente.
+          </p>
+        </div>
+        <Link
+          href="/admin/dimensionamento"
+          className="rounded-lg bg-blue-600 px-4 py-2 text-sm font-semibold text-white hover:bg-blue-700"
+        >
+          + Nova Proposta
+        </Link>
       </div>
 
       <div className="overflow-hidden rounded-lg border bg-white shadow-sm">
