@@ -18,7 +18,7 @@ export default async function AdminLayout({ children }: { children: ReactNode })
 
   return (
     <div className="flex min-h-screen bg-gray-50">
-      <aside className="w-64 shrink-0 bg-[#0b1220] border-r border-[#1e293b] p-5 flex flex-col">
+      <aside className="w-64 shrink-0 bg-[#0b1220] border-r border-[#1e293b] p-5 flex flex-col sticky top-0 h-screen overflow-y-auto">
         <div className="mb-8 flex items-center gap-2 px-2">
           <span className="text-[#22c55e] text-xl">☀</span>
           <span className="text-[15px] font-bold text-white">SolarFlow Pro</span>
