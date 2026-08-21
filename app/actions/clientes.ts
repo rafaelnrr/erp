@@ -26,6 +26,14 @@ export async function criarCliente(formData: FormData) {
   const estruturaTelhado = (formData.get("estrutura_telhado") as string) || null;
   const observacoes = (formData.get("observacoes") as string) || null;
 
+  const grupoTarifario = (formData.get("grupo_tarifario") as string) || null;
+  const classeB = (formData.get("classe_b") as string) || null;
+  const subgrupoA = (formData.get("subgrupo_a") as string) || null;
+  const modalidadeTarifariaA = (formData.get("modalidade_tarifaria_a") as string) || null;
+  const tarifaKwh = formData.get("tarifa_kwh") ? Number(formData.get("tarifa_kwh")) : null;
+  const tarifaKwhPonta = formData.get("tarifa_kwh_ponta") ? Number(formData.get("tarifa_kwh_ponta")) : null;
+  const tarifaKwhForaPonta = formData.get("tarifa_kwh_fora_ponta") ? Number(formData.get("tarifa_kwh_fora_ponta")) : null;
+
   const { data: cliente, error } = await supabase
     .from("clientes")
     .insert({
@@ -44,6 +52,13 @@ export async function criarCliente(formData: FormData) {
       tipo_telhado: tipoTelhado,
       estrutura_telhado: estruturaTelhado,
       observacoes,
+      grupo_tarifario: grupoTarifario as any,
+      classe_b: classeB as any,
+      subgrupo_a: subgrupoA as any,
+      modalidade_tarifaria_a: modalidadeTarifariaA as any,
+      tarifa_kwh: tarifaKwh,
+      tarifa_kwh_ponta: tarifaKwhPonta,
+      tarifa_kwh_fora_ponta: tarifaKwhForaPonta,
     })
     .select("id")
     .single();

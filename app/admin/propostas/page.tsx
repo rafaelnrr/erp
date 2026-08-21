@@ -1,3 +1,4 @@
+import Link from "next/link";
 import { listarPropostas } from "@/app/actions/propostas";
 import { StatusPropostaSelect } from "@/components/StatusPropostaSelect";
 
@@ -18,8 +19,8 @@ export default async function PropostasPage() {
       <div className="mb-6">
         <h1 className="text-xl font-semibold text-gray-800">Orçamentos e Propostas</h1>
         <p className="mt-1 text-sm text-gray-500">
-          Propostas são geradas a partir de um Dimensionamento salvo — vá em Dimensionamento Inteligente, calcule
-          para um cliente e clique em "Gerar Proposta".
+          Propostas nascem de um Dimensionamento salvo — vá em Dimensionamento Inteligente, calcule para um cliente
+          e clique em "Gerar Proposta" para abrir o Construtor.
         </p>
       </div>
 
@@ -48,21 +49,31 @@ export default async function PropostasPage() {
                   <td className="px-4 py-3 font-mono text-xs text-gray-700">#{p.numero}</td>
                   <td className="px-4 py-3 font-medium text-gray-800">{p.clientes?.nome ?? "—"}</td>
                   <td className="px-4 py-3 text-gray-600">
-                    {Number(p.valor_total ?? 0).toLocaleString("pt-BR", { style: "currency", currency: "BRL" })}
+                    {p.status === "rascunho" ? "—" : Number(p.valor_total ?? 0).toLocaleString("pt-BR", { style: "currency", currency: "BRL" })}
                   </td>
                   <td className="px-4 py-3">
-                    <StatusPropostaSelect id={p.id} statusAtual={p.status} labels={LABEL_STATUS} />
+                    {p.status === "rascunho" ? (
+                      <span className="rounded-full bg-gray-100 px-2 py-1 text-xs font-medium text-gray-600">Rascunho</span>
+                    ) : (
+                      <StatusPropostaSelect id={p.id} statusAtual={p.status} labels={LABEL_STATUS} />
+                    )}
                   </td>
                   <td className="px-4 py-3 text-gray-500 text-xs">{new Date(p.criado_em).toLocaleDateString("pt-BR")}</td>
                   <td className="px-4 py-3">
-                    <a
-                      href={`/api/propostas/${p.id}/pdf`}
-                      target="_blank"
-                      rel="noopener noreferrer"
-                      className="text-blue-600 hover:underline text-xs font-medium"
-                    >
-                      Gerar PDF
-                    </a>
+                    {p.status === "rascunho" ? (
+                      <Link href={`/admin/propostas/${p.id}/construtor`} className="text-blue-600 hover:underline text-xs font-medium">
+                        Continuar edição
+                      </Link>
+                    ) : (
+                      <a
+                        href={`/api/propostas/${p.id}/pdf`}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className="text-blue-600 hover:underline text-xs font-medium"
+                      >
+                        Abrir PDF
+                      </a>
+                    )}
                   </td>
                 </tr>
               ))

@@ -1,8 +1,9 @@
 "use client";
 
 import { useEffect, useState } from "react";
+import { useRouter } from "next/navigation";
 import { listarClientes } from "@/app/actions/clientes";
-import { criarProposta } from "@/app/actions/propostas";
+import { criarPropostaRascunho } from "@/app/actions/propostas";
 import {
   calcularDimensionamento,
   listarCatalogoParaDimensionamento,
@@ -25,6 +26,7 @@ interface CatalogoOpcao {
 }
 
 export default function DimensionamentoPage() {
+  const router = useRouter();
   const [consumo, setConsumo] = useState(1600);
   const [hsp, setHsp] = useState(5.2);
   const [perdas, setPerdas] = useState(20);
@@ -45,7 +47,6 @@ export default function DimensionamentoPage() {
   const [resultado, setResultado] = useState<DimensionamentoResultado | null>(null);
   const [salvo, setSalvo] = useState(false);
   const [dimensionamentoId, setDimensionamentoId] = useState<string | null>(null);
-  const [proposta, setProposta] = useState<{ id: string; numero: number } | null>(null);
   const [gerandoProposta, setGerandoProposta] = useState(false);
 
   useEffect(() => {
@@ -64,7 +65,6 @@ export default function DimensionamentoPage() {
   async function handleCalcular() {
     setLoading(true);
     setSalvo(false);
-    setProposta(null);
     setDimensionamentoId(null);
     const res = await calcularDimensionamento({
       cliente_id: clienteId || undefined,
@@ -93,9 +93,9 @@ export default function DimensionamentoPage() {
   async function handleGerarProposta() {
     if (!dimensionamentoId) return;
     setGerandoProposta(true);
-    const res = await criarProposta(dimensionamentoId);
+    const res = await criarPropostaRascunho(dimensionamentoId);
     setGerandoProposta(false);
-    if (res.success) setProposta({ id: res.id, numero: res.numero });
+    if (res.success) router.push(`/admin/propostas/${res.id}/construtor`);
   }
 
   function handleClienteChange(id: string) {
@@ -208,24 +208,14 @@ export default function DimensionamentoPage() {
             {salvo && (
               <p className="mt-3 text-[13px] text-[#86efac]">Dimensionamento salvo para o cliente selecionado.</p>
             )}
-            {salvo && !proposta && (
+            {salvo && (
               <button
                 onClick={handleGerarProposta}
                 disabled={gerandoProposta}
                 className="w-full border border-[#334155] mt-3 p-3 rounded-[11px] bg-transparent text-[#86efac] font-semibold cursor-pointer text-[14px] hover:bg-[#0b1220] disabled:opacity-60"
               >
-                {gerandoProposta ? "Gerando proposta..." : "Gerar Proposta"}
+                {gerandoProposta ? "Abrindo Construtor..." : "Gerar Proposta"}
               </button>
-            )}
-            {proposta && (
-              <a
-                href={`/api/propostas/${proposta.id}/pdf`}
-                target="_blank"
-                rel="noopener noreferrer"
-                className="block w-full text-center border border-[#22c55e] mt-3 p-3 rounded-[11px] bg-[#052e16] text-[#86efac] font-semibold text-[14px]"
-              >
-                Proposta #{proposta.numero} gerada — abrir PDF
-              </a>
             )}
           </section>
 

@@ -238,6 +238,7 @@ export async function calcularDimensionamento(
         modulo_id: sugestao.modulo.id,
         inversor_id: sugestao.inversor.id,
         qtde_modulos: sugestao.qtde_modulos,
+        qtde_inversores: sugestao.qtde_inversores,
         tipo_ligacao: input.tipo_ligacao ?? null,
       })
       .select("id")

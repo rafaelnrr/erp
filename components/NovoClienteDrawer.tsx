@@ -47,6 +47,14 @@ export function NovoClienteDrawer() {
   const [fatura, setFatura] = useState<File | null>(null);
   const [observacoes, setObservacoes] = useState("");
 
+  const [grupoTarifario, setGrupoTarifario] = useState<"A" | "B" | "">("");
+  const [classeB, setClasseB] = useState("");
+  const [subgrupoA, setSubgrupoA] = useState("");
+  const [modalidadeA, setModalidadeA] = useState("");
+  const [tarifaKwh, setTarifaKwh] = useState("");
+  const [tarifaKwhPonta, setTarifaKwhPonta] = useState("");
+  const [tarifaKwhForaPonta, setTarifaKwhForaPonta] = useState("");
+
   const [fotos, setFotos] = useState<FotoSurvey[]>([]);
 
   const [tiposTelhadoExtra, setTiposTelhadoExtra] = useState<string[]>([]);
@@ -80,6 +88,8 @@ export function NovoClienteDrawer() {
     setNome(""); setDocumento(""); setConsumo("");
     setCep(""); setRua(""); setNumero(""); setBairro(""); setCidade(""); setUf(""); setZona("urbana");
     setConcessionaria(""); setTipoTelhado(""); setEstruturaTelhado(""); setFatura(null); setObservacoes("");
+    setGrupoTarifario(""); setClasseB(""); setSubgrupoA(""); setModalidadeA("");
+    setTarifaKwh(""); setTarifaKwhPonta(""); setTarifaKwhForaPonta("");
     setFotos([]); setAba("dados"); setErro(null);
   }
 
@@ -103,6 +113,13 @@ export function NovoClienteDrawer() {
     fd.set("tipo_telhado", tipoTelhado);
     fd.set("estrutura_telhado", estruturaTelhado);
     fd.set("observacoes", observacoes);
+    fd.set("grupo_tarifario", grupoTarifario);
+    fd.set("classe_b", grupoTarifario === "B" ? classeB : "");
+    fd.set("subgrupo_a", grupoTarifario === "A" ? subgrupoA : "");
+    fd.set("modalidade_tarifaria_a", grupoTarifario === "A" ? modalidadeA : "");
+    fd.set("tarifa_kwh", grupoTarifario === "B" ? tarifaKwh : "");
+    fd.set("tarifa_kwh_ponta", grupoTarifario === "A" ? tarifaKwhPonta : "");
+    fd.set("tarifa_kwh_fora_ponta", grupoTarifario === "A" ? tarifaKwhForaPonta : "");
     if (fatura) fd.set("fatura", fatura);
     for (const f of fotos) {
       fd.append("foto_arquivo", f.file);
@@ -262,6 +279,76 @@ export function NovoClienteDrawer() {
                     options={Array.from(new Set([...ESTRUTURAS_PADRAO, ...estruturasExtra]))}
                   />
                   <FileDropzone label="Fatura de Energia" file={fatura} onChange={setFatura} />
+
+                  <div className="border-t border-[#1e293b] pt-4">
+                    <label className="block text-[13px] text-[#cbd5e1] mb-2">Grupo Tarifário</label>
+                    <div className="flex rounded-lg border border-[#334155] overflow-hidden mb-3">
+                      {(["B", "A"] as const).map((g) => (
+                        <button
+                          key={g}
+                          type="button"
+                          onClick={() => setGrupoTarifario(g)}
+                          className={`flex-1 py-2 text-[13px] transition-colors ${
+                            grupoTarifario === g ? "bg-[#22c55e] text-black font-semibold" : "bg-[#0b1220] text-[#94a3b8]"
+                          }`}
+                        >
+                          Grupo {g} ({g === "B" ? "Baixa Tensão" : "Alta Tensão"})
+                        </button>
+                      ))}
+                    </div>
+
+                    {grupoTarifario === "B" && (
+                      <div className="grid grid-cols-2 gap-3">
+                        <div>
+                          <label className="block text-[13px] text-[#cbd5e1] mb-2">Classe</label>
+                          <select value={classeB} onChange={(e) => setClasseB(e.target.value)}>
+                            <option value="">Selecione...</option>
+                            {["B1", "B2", "B3", "B4"].map((c) => (
+                              <option key={c} value={c}>{c}</option>
+                            ))}
+                          </select>
+                        </div>
+                        <div>
+                          <label className="block text-[13px] text-[#cbd5e1] mb-2">Tarifa TE+TUSD (R$/kWh)</label>
+                          <input type="number" step="0.0001" value={tarifaKwh} onChange={(e) => setTarifaKwh(e.target.value)} />
+                        </div>
+                      </div>
+                    )}
+
+                    {grupoTarifario === "A" && (
+                      <div className="flex flex-col gap-3">
+                        <div className="grid grid-cols-2 gap-3">
+                          <div>
+                            <label className="block text-[13px] text-[#cbd5e1] mb-2">Subgrupo</label>
+                            <select value={subgrupoA} onChange={(e) => setSubgrupoA(e.target.value)}>
+                              <option value="">Selecione...</option>
+                              {["A1", "A2", "A3", "A3a", "A4", "AS"].map((s) => (
+                                <option key={s} value={s}>{s}</option>
+                              ))}
+                            </select>
+                          </div>
+                          <div>
+                            <label className="block text-[13px] text-[#cbd5e1] mb-2">Modalidade Tarifária</label>
+                            <select value={modalidadeA} onChange={(e) => setModalidadeA(e.target.value)}>
+                              <option value="">Selecione...</option>
+                              <option value="verde">Verde</option>
+                              <option value="azul">Azul</option>
+                            </select>
+                          </div>
+                        </div>
+                        <div className="grid grid-cols-2 gap-3">
+                          <div>
+                            <label className="block text-[13px] text-[#cbd5e1] mb-2">Tarifa TE+TUSD Ponta (R$/kWh)</label>
+                            <input type="number" step="0.0001" value={tarifaKwhPonta} onChange={(e) => setTarifaKwhPonta(e.target.value)} />
+                          </div>
+                          <div>
+                            <label className="block text-[13px] text-[#cbd5e1] mb-2">Tarifa TE+TUSD Fora Ponta (R$/kWh)</label>
+                            <input type="number" step="0.0001" value={tarifaKwhForaPonta} onChange={(e) => setTarifaKwhForaPonta(e.target.value)} />
+                          </div>
+                        </div>
+                      </div>
+                    )}
+                  </div>
                 </>
               )}
 
