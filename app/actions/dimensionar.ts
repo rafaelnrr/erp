@@ -11,6 +11,8 @@ interface CatalogoItem {
   num_fases?: number;
 }
 
+export type TipoLigacao = "monofasico" | "bifasico" | "trifasico";
+
 export interface DimensionarInput {
   cliente_id?: string;
   consumo_kwh_mes: number;
@@ -20,6 +22,7 @@ export interface DimensionarInput {
   crescimento_pct: number;
   modulo_id?: string;
   inversor_id?: string;
+  tipo_ligacao?: TipoLigacao;
 }
 
 export interface Combinacao {
@@ -99,18 +102,20 @@ export async function calcularDimensionamento(
 
   const { data: produtos, error: errProdutos } = await supabase
     .from("produtos")
-    .select("id, sku, categoria, atributos")
+    .select("id, sku, categoria, atributos, fabricantes(nome)")
     .in("categoria", ["modulo", "inversor"]);
 
   if (errProdutos) {
     return { ok: false, erros: ["Não foi possível consultar o catálogo de produtos."] };
   }
 
+  const nomeFabricante = (p: any) => p.fabricantes?.nome ?? "—";
+
   const todosModulos: CatalogoItem[] = (produtos || [])
     .filter((p) => p.categoria === "modulo")
     .map((p) => {
       const a = extrairAtributos(p.atributos);
-      return { id: p.id, sku: p.sku, fabricante: a.fabricante ?? "—", modelo: a.modelo ?? "—", potencia_w: Number(a.potencia_w) || 0 };
+      return { id: p.id, sku: p.sku, fabricante: nomeFabricante(p), modelo: a.modelo ?? "—", potencia_w: Number(a.potencia_w) || 0 };
     })
     .filter((m) => m.potencia_w > 0);
 
@@ -121,7 +126,7 @@ export async function calcularDimensionamento(
       return {
         id: p.id,
         sku: p.sku,
-        fabricante: a.fabricante ?? "—",
+        fabricante: nomeFabricante(p),
         modelo: a.modelo ?? "—",
         potencia_w: Number(a.potencia_w) || 0,
         num_fases: Number(a.num_fases) || undefined,
@@ -154,6 +159,12 @@ export async function calcularDimensionamento(
     const potenciaInstaladaKwp = (qtdeModulos * modulo.potencia_w) / 1000;
 
     for (const inversor of inversoresCandidatos) {
+      // Hard Stop real: inversor trifásico não pode ser instalado em ligação
+      // mono/bifásica — incompatibilidade física, não recomendação técnica.
+      if (input.tipo_ligacao && input.tipo_ligacao !== "trifasico" && inversor.num_fases === 3) {
+        continue;
+      }
+
       const qtdeInversores = melhorQtdeInversores(potenciaInstaladaKwp, inversor.potencia_w);
       const potAcTotalKwp = (qtdeInversores * inversor.potencia_w) / 1000;
       const dcacReal = potenciaInstaladaKwp / potAcTotalKwp;
@@ -177,6 +188,14 @@ export async function calcularDimensionamento(
   }
 
   if (combinacoes.length === 0) {
+    if (input.tipo_ligacao && input.tipo_ligacao !== "trifasico") {
+      return {
+        ok: false,
+        erros: [
+          `Nenhum inversor do catálogo é compatível com ligação ${input.tipo_ligacao}. Inversores trifásicos não podem ser instalados nesse tipo de ligação — cadastre um inversor monofásico/bifásico ou revise a ligação informada.`,
+        ],
+      };
+    }
     return {
       ok: false,
       erros: [
@@ -219,6 +238,7 @@ export async function calcularDimensionamento(
         modulo_id: sugestao.modulo.id,
         inversor_id: sugestao.inversor.id,
         qtde_modulos: sugestao.qtde_modulos,
+        tipo_ligacao: input.tipo_ligacao ?? null,
       })
       .select("id")
       .single();
@@ -247,18 +267,15 @@ export async function listarCatalogoParaDimensionamento() {
   const supabase = await createClient();
   const { data, error } = await supabase
     .from("produtos")
-    .select("id, sku, categoria, atributos")
+    .select("id, sku, categoria, atributos, fabricantes(nome)")
     .in("categoria", ["modulo", "inversor"])
     .order("categoria", { ascending: true });
 
   if (error) return { ok: false as const, error: error.message, modulos: [], inversores: [] };
 
-  const modulos = (data || [])
-    .filter((p) => p.categoria === "modulo")
-    .map((p) => ({ id: p.id, sku: p.sku, ...extrairAtributos(p.atributos) }));
-  const inversores = (data || [])
-    .filter((p) => p.categoria === "inversor")
-    .map((p) => ({ id: p.id, sku: p.sku, ...extrairAtributos(p.atributos) }));
+  const comFabricante = (p: any) => ({ id: p.id, sku: p.sku, fabricante: p.fabricantes?.nome ?? "—", ...extrairAtributos(p.atributos) });
+  const modulos = (data || []).filter((p) => p.categoria === "modulo").map(comFabricante);
+  const inversores = (data || []).filter((p) => p.categoria === "inversor").map(comFabricante);
 
   return { ok: true as const, modulos, inversores };
 }

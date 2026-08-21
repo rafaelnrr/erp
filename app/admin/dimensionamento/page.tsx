@@ -6,6 +6,7 @@ import {
   calcularDimensionamento,
   listarCatalogoParaDimensionamento,
   type DimensionamentoResultado,
+  type TipoLigacao,
 } from "@/app/actions/dimensionar";
 
 interface Cliente {
@@ -36,6 +37,7 @@ export default function DimensionamentoPage() {
   const [clienteId, setClienteId] = useState("");
   const [moduloId, setModuloId] = useState("");
   const [inversorId, setInversorId] = useState("");
+  const [tipoLigacao, setTipoLigacao] = useState<TipoLigacao>("monofasico");
 
   const [loading, setLoading] = useState(false);
   const [erros, setErros] = useState<string[]>([]);
@@ -67,6 +69,7 @@ export default function DimensionamentoPage() {
       crescimento_pct: crescimento,
       modulo_id: moduloId || undefined,
       inversor_id: inversorId || undefined,
+      tipo_ligacao: tipoLigacao,
     });
     setLoading(false);
 
@@ -148,7 +151,14 @@ export default function DimensionamentoPage() {
                 <label className="block text-[13px] text-[#cbd5e1] mb-2">Crescimento carga (%)</label>
                 <input type="number" value={crescimento} onChange={(e) => setCrescimento(Number(e.target.value))} min="0" max="100" />
               </div>
-              <div />
+              <div>
+                <label className="block text-[13px] text-[#cbd5e1] mb-2">Tipo de Ligação</label>
+                <select value={tipoLigacao} onChange={(e) => setTipoLigacao(e.target.value as TipoLigacao)}>
+                  <option value="monofasico">Monofásico</option>
+                  <option value="bifasico">Bifásico</option>
+                  <option value="trifasico">Trifásico</option>
+                </select>
+              </div>
               <div>
                 <label className="block text-[13px] text-[#cbd5e1] mb-2">Módulo (do catálogo)</label>
                 <select value={moduloId} onChange={(e) => setModuloId(e.target.value)}>

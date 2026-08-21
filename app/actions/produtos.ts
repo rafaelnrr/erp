@@ -3,7 +3,10 @@
 import { createClient } from "@/utils/supabase/server";
 import type { Database } from "@/types/supabase";
 
-export type Produto = Database["public"]["Tables"]["produtos"]["Row"];
+export type Produto = Database["public"]["Tables"]["produtos"]["Row"] & {
+  fabricante_id: string | null;
+  fabricantes: { nome: string } | null;
+};
 
 type ListarProdutosResult =
   | { ok: true; data: Produto[] }
@@ -22,9 +25,7 @@ export async function listarProdutos(
 
   let query = supabase
     .from("produtos")
-    .select(
-      "id, sku, categoria, atributos"
-    )
+    .select("id, sku, categoria, atributos, fabricante_id, fabricantes(nome)")
     .order("categoria", { ascending: true });
 
   if (categoria) {
@@ -38,30 +39,30 @@ export async function listarProdutos(
     return { ok: false, error: "Não foi possível carregar o catálogo." };
   }
 
-  return { ok: true, data: data as Produto[] };
+  return { ok: true, data: data as unknown as Produto[] };
 }
 
 export async function criarProduto(formData: FormData) {
   const supabase = await createClient();
   const sku = formData.get("sku") as string;
   const categoria = formData.get("categoria") as string;
-  const fabricante = formData.get("fabricante") as string;
+  const fabricanteId = formData.get("fabricante_id") as string;
   const modelo = formData.get("modelo") as string;
   const potencia = Number(formData.get("potencia_w"));
 
   const atributos = {
-    fabricante,
     modelo,
-    ...(potencia > 0 && { potencia_w: potencia })
+    ...(potencia > 0 && { potencia_w: potencia }),
   };
 
   const { error } = await supabase.from("produtos").insert({
     sku,
     categoria: categoria as any,
-    atributos
+    fabricante_id: fabricanteId || null,
+    atributos,
   });
 
   if (error) return { error: error.message };
-  
+
   return { success: true };
 }

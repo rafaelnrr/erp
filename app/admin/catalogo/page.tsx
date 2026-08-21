@@ -68,7 +68,7 @@ export default async function CatalogoPage() {
                         {LABEL_CATEGORIA[p.categoria as keyof typeof LABEL_CATEGORIA]}
                       </span>
                     </td>
-                    <td className="px-4 py-3">{attrs.fabricante ?? "—"}</td>
+                    <td className="px-4 py-3">{p.fabricantes?.nome ?? "—"}</td>
                     <td className="px-4 py-3">{attrs.modelo ?? "—"}</td>
                     <td className="px-4 py-3">{attrs.potencia_w ?? "—"}</td>
                     <td className="px-4 py-3">{attrs.num_mppt ?? "—"}</td>
