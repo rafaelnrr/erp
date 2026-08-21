@@ -7,6 +7,7 @@ import { buscarEnderecoPorCep } from "@/utils/cep";
 import { CreatableSelect } from "@/components/CreatableSelect";
 import { FileDropzone } from "@/components/FileDropzone";
 import { SiteSurveyUpload, type FotoSurvey } from "@/components/SiteSurveyUpload";
+import { usePerfil } from "@/hooks/usePerfil";
 
 const TIPOS_TELHADO_PADRAO = ["Cerâmica", "Fibra Cimento", "Metálico", "Laje", "Solo"];
 const ESTRUTURAS_PADRAO = ["Madeira", "Metálica"];
@@ -23,6 +24,7 @@ type TabId = (typeof TABS)[number]["id"];
 
 export function NovoClienteDrawer() {
   const router = useRouter();
+  const { podeEditar } = usePerfil();
   const [aberto, setAberto] = useState(false);
   const [aba, setAba] = useState<TabId>("dados");
   const [salvando, setSalvando] = useState(false);
@@ -140,12 +142,14 @@ export function NovoClienteDrawer() {
 
   return (
     <>
-      <button
-        onClick={() => setAberto(true)}
-        className="rounded-lg bg-blue-600 px-4 py-2 text-sm font-semibold text-white hover:bg-blue-700"
-      >
-        + Novo Cliente
-      </button>
+      {podeEditar && (
+        <button
+          onClick={() => setAberto(true)}
+          className="rounded-lg bg-blue-600 px-4 py-2 text-sm font-semibold text-white hover:bg-blue-700"
+        >
+          + Novo Cliente
+        </button>
+      )}
 
       {aberto && (
         <div className="fixed inset-0 z-50 flex justify-end bg-black/60">

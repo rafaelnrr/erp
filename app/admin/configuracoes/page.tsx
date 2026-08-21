@@ -39,10 +39,15 @@ export default async function ConfiguracoesPage() {
         </table>
       </div>
 
-      <p className="mt-4 max-w-2xl text-xs text-gray-500">
-        Novos usuários se cadastram como "Comercial" por padrão. Para criar um usuário administrador diretamente,
-        é necessário acesso ao painel do Supabase — essa tela apenas promove/rebaixa contas já existentes.
-      </p>
+      <div className="mt-4 max-w-2xl text-xs text-gray-500 space-y-1">
+        <p><b>Administrador:</b> acesso total, inclusive esta tela.</p>
+        <p><b>Editor:</b> cria e edita clientes, dimensionamentos e propostas próprias — não gerencia catálogo nem usuários.</p>
+        <p><b>Visualizador:</b> só leitura, em todo o sistema — não salva, edita ou exclui nada.</p>
+        <p className="pt-2">
+          Novos usuários se cadastram como "Editor" por padrão. Para criar um usuário diretamente, é necessário
+          acesso ao painel do Supabase — essa tela apenas promove/rebaixa contas já existentes.
+        </p>
+      </div>
     </main>
   );
 }

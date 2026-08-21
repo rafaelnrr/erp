@@ -1,6 +1,7 @@
 import Link from "next/link";
 import { listarPropostas } from "@/app/actions/propostas";
 import { StatusPropostaSelect } from "@/components/StatusPropostaSelect";
+import { obterMeuPapel } from "@/app/actions/perfis";
 
 const LABEL_STATUS: Record<string, string> = {
   gerada: "Gerada",
@@ -11,8 +12,9 @@ const LABEL_STATUS: Record<string, string> = {
 };
 
 export default async function PropostasPage() {
-  const result = await listarPropostas();
+  const [result, role] = await Promise.all([listarPropostas(), obterMeuPapel()]);
   const propostas = result.data;
+  const podeEditar = role === "admin" || role === "editor";
 
   return (
     <main className="p-8">
@@ -23,12 +25,14 @@ export default async function PropostasPage() {
             Escolha um cliente e monte a proposta — o dimensionamento pode ser feito dentro dela.
           </p>
         </div>
-        <Link
-          href="/admin/propostas/novo"
-          className="rounded-lg bg-blue-600 px-4 py-2 text-sm font-semibold text-white hover:bg-blue-700"
-        >
-          + Nova Proposta
-        </Link>
+        {podeEditar && (
+          <Link
+            href="/admin/propostas/novo"
+            className="rounded-lg bg-blue-600 px-4 py-2 text-sm font-semibold text-white hover:bg-blue-700"
+          >
+            + Nova Proposta
+          </Link>
+        )}
       </div>
 
       <div className="overflow-hidden rounded-lg border bg-white shadow-sm">
@@ -59,8 +63,10 @@ export default async function PropostasPage() {
                     {p.status === "rascunho" ? "—" : Number(p.valor_total ?? 0).toLocaleString("pt-BR", { style: "currency", currency: "BRL" })}
                   </td>
                   <td className="px-4 py-3">
-                    {p.status === "rascunho" ? (
-                      <span className="rounded-full bg-gray-100 px-2 py-1 text-xs font-medium text-gray-600">Rascunho</span>
+                    {p.status === "rascunho" || !podeEditar ? (
+                      <span className="rounded-full bg-gray-100 px-2 py-1 text-xs font-medium text-gray-600">
+                        {p.status === "rascunho" ? "Rascunho" : LABEL_STATUS[p.status] ?? p.status}
+                      </span>
                     ) : (
                       <StatusPropostaSelect id={p.id} statusAtual={p.status} labels={LABEL_STATUS} />
                     )}
@@ -69,7 +75,7 @@ export default async function PropostasPage() {
                   <td className="px-4 py-3">
                     {p.status === "rascunho" ? (
                       <Link href={`/admin/propostas/${p.id}/construtor`} className="text-blue-600 hover:underline text-xs font-medium">
-                        Continuar edição
+                        {podeEditar ? "Continuar edição" : "Ver detalhes"}
                       </Link>
                     ) : (
                       <a

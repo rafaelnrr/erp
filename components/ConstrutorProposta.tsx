@@ -12,6 +12,8 @@ import {
   removerServicoProposta,
 } from "@/app/actions/propostas";
 import { CalculadoraSolarEmbutida } from "@/components/CalculadoraSolarEmbutida";
+import { ProdutoCombobox } from "@/components/ProdutoCombobox";
+import { usePerfil } from "@/hooks/usePerfil";
 
 interface Item {
   id: string;
@@ -19,6 +21,7 @@ interface Item {
   descricao: string;
   quantidade: number;
   preco_unitario: number;
+  preco_catalogo: number;
 }
 
 interface ServicoProposta {
@@ -73,8 +76,9 @@ export function ConstrutorProposta({
   catalogoProdutos: Produto[];
 }) {
   const router = useRouter();
+  const { podeEditar, carregando: carregandoPerfil } = usePerfil();
   const [aba, setAba] = useState<TabId>("equipamentos");
-  const [itens, setItens] = useState<Item[]>(itensIniciais);
+  const [itens, setItens] = useState<Item[]>(itensIniciais.map((i) => ({ ...i, preco_catalogo: (i as any).preco_catalogo ?? i.preco_unitario })));
   const [servicos, setServicos] = useState<ServicoProposta[]>(servicosIniciais);
   const [dimensionadorAberto, setDimensionadorAberto] = useState(false);
 
@@ -84,12 +88,14 @@ export function ConstrutorProposta({
   const [validadeDias, setValidadeDias] = useState(propostaInicial.validade_dias ?? 10);
   const [prazoInstalacao, setPrazoInstalacao] = useState(propostaInicial.prazo_instalacao_dias ?? 15);
 
-  const [produtoBusca, setProdutoBusca] = useState("");
   const [servicoSelecionadoId, setServicoSelecionadoId] = useState("");
   const [finalizando, setFinalizando] = useState(false);
   const [erro, setErro] = useState<string | null>(null);
 
   const jaFinalizada = propostaInicial.status !== "rascunho";
+  // trava edição se a proposta já foi finalizada OU se o usuário não tem permissão de escrita
+  // (enquanto o papel ainda está carregando, trava por padrão — evita um flash de campos editáveis)
+  const travado = jaFinalizada || carregandoPerfil || !podeEditar;
   const dimensionamento = propostaInicial.dimensionamentos;
 
   const valorItens = useMemo(() => itens.reduce((acc, i) => acc + i.quantidade * i.preco_unitario, 0), [itens]);
@@ -101,15 +107,17 @@ export function ConstrutorProposta({
   const valorAnualRecorrente = useMemo(() => servicosAnuais.reduce((acc, s) => acc + s.preco, 0), [servicosAnuais]);
   const valorTotal = valorItens + valorServicosUnicos;
 
-  const produtosFiltrados = catalogoProdutos.filter((p) => {
-    const texto = `${p.sku} ${p.atributos?.modelo ?? ""} ${p.fabricantes?.nome ?? ""}`.toLowerCase();
-    return produtoBusca.length > 1 && texto.includes(produtoBusca.toLowerCase());
-  });
-
   function handleItensDoDimensionamento(itensNovos: any[]) {
     setItens((prev) => [
       ...prev,
-      ...itensNovos.map((i) => ({ id: i.id, categoria: i.categoria, descricao: i.descricao, quantidade: Number(i.quantidade), preco_unitario: Number(i.preco_unitario) })),
+      ...itensNovos.map((i) => ({
+        id: i.id,
+        categoria: i.categoria,
+        descricao: i.descricao,
+        quantidade: Number(i.quantidade),
+        preco_unitario: Number(i.preco_unitario),
+        preco_catalogo: Number(i.preco_unitario),
+      })),
     ]);
     setDimensionadorAberto(false);
   }
@@ -125,9 +133,15 @@ export function ConstrutorProposta({
     if (res.success) {
       setItens((prev) => [
         ...prev,
-        { id: crypto.randomUUID(), categoria: p.categoria, descricao: `${p.fabricantes?.nome ?? ""} ${p.atributos?.modelo ?? p.sku}`.trim(), quantidade: 1, preco_unitario: 0 },
+        {
+          id: crypto.randomUUID(),
+          categoria: p.categoria,
+          descricao: `${p.fabricantes?.nome ?? ""} ${p.atributos?.modelo ?? p.sku}`.trim(),
+          quantidade: 1,
+          preco_unitario: 0,
+          preco_catalogo: 0,
+        },
       ]);
-      setProdutoBusca("");
       router.refresh();
     }
   }
@@ -205,6 +219,11 @@ export function ConstrutorProposta({
           Esta proposta já foi finalizada e o conteúdo está congelado. Para alterar, gere uma nova proposta.
         </div>
       )}
+      {!jaFinalizada && !carregandoPerfil && !podeEditar && (
+        <div className="mb-6 rounded-lg border border-gray-300 bg-gray-50 p-3 text-sm text-gray-600">
+          Você está no modo Visualizador — pode navegar pela proposta, mas não pode editar ou finalizar.
+        </div>
+      )}
 
       <div className="grid grid-cols-1 lg:grid-cols-[1fr_320px] gap-6 items-start">
         <div className="rounded-xl border bg-white shadow-sm overflow-hidden">
@@ -227,7 +246,7 @@ export function ConstrutorProposta({
               <div>
                 <div className="flex items-center justify-between mb-3">
                   <h2 className="font-medium text-gray-800">Escopo de Fornecimento</h2>
-                  {!jaFinalizada && (
+                  {!travado && (
                     <button
                       onClick={() => setDimensionadorAberto(true)}
                       className="rounded-lg bg-gradient-to-r from-amber-500 to-orange-500 px-4 py-2 text-sm font-bold text-white shadow-sm hover:brightness-110"
@@ -238,55 +257,45 @@ export function ConstrutorProposta({
                 </div>
                 <div className="divide-y rounded-lg border">
                   {itens.length === 0 && <p className="p-4 text-sm text-gray-500">Nenhum item adicionado.</p>}
-                  {itens.map((item) => (
-                    <div key={item.id} className="flex items-center gap-3 p-3">
-                      <span className="flex-1 text-sm text-gray-800">{item.descricao}</span>
-                      <input
-                        type="number"
-                        value={item.quantidade}
-                        disabled={jaFinalizada}
-                        onChange={(e) => handleQuantidade(item, Number(e.target.value))}
-                        className="w-16 rounded border p-1.5 text-sm text-right"
-                      />
-                      <input
-                        type="number"
-                        value={item.preco_unitario}
-                        disabled={jaFinalizada}
-                        onChange={(e) => handlePreco(item, Number(e.target.value))}
-                        className="w-24 rounded border p-1.5 text-sm text-right"
-                      />
-                      <span className="w-24 text-right text-sm font-medium text-gray-700">{formatBRL(item.quantidade * item.preco_unitario)}</span>
-                      {!jaFinalizada && (
-                        <button onClick={() => handleRemoverItem(item.id)} className="text-red-500 text-xs">
-                          remover
-                        </button>
-                      )}
-                    </div>
-                  ))}
+                  {itens.map((item) => {
+                    const precoEditado = item.preco_unitario !== item.preco_catalogo;
+                    return (
+                      <div key={item.id} className="flex items-center gap-3 p-3">
+                        <span className="flex-1 text-sm text-gray-800">{item.descricao}</span>
+                        <input
+                          type="number"
+                          value={item.quantidade}
+                          disabled={travado}
+                          onChange={(e) => handleQuantidade(item, Number(e.target.value))}
+                          className="w-16 rounded border p-1.5 text-sm text-right disabled:bg-gray-50 disabled:text-gray-400"
+                        />
+                        <div className="flex items-center gap-1 w-24">
+                          <input
+                            type="number"
+                            value={item.preco_unitario}
+                            disabled={travado}
+                            title={precoEditado ? `Preço de catálogo: ${formatBRL(item.preco_catalogo)}` : undefined}
+                            onChange={(e) => handlePreco(item, Number(e.target.value))}
+                            className={`w-full rounded border p-1.5 text-sm text-right disabled:bg-gray-50 disabled:text-gray-400 ${
+                              precoEditado ? "border-amber-400 bg-amber-50" : ""
+                            }`}
+                          />
+                          {precoEditado && <span className="text-amber-500 text-xs" title="Preço alterado do catálogo">✎</span>}
+                        </div>
+                        <span className="w-24 text-right text-sm font-medium text-gray-700">{formatBRL(item.quantidade * item.preco_unitario)}</span>
+                        {!travado && (
+                          <button onClick={() => handleRemoverItem(item.id)} className="text-red-500 text-xs">
+                            remover
+                          </button>
+                        )}
+                      </div>
+                    );
+                  })}
                 </div>
 
-                {!jaFinalizada && (
-                  <div className="relative mt-3">
-                    <input
-                      value={produtoBusca}
-                      onChange={(e) => setProdutoBusca(e.target.value)}
-                      placeholder="+ Buscar no catálogo (cabos, disjuntores, conectores...)"
-                      className="w-full rounded-lg border p-2.5 text-sm"
-                    />
-                    {produtosFiltrados.length > 0 && (
-                      <ul className="absolute z-10 mt-1 w-full max-h-56 overflow-auto rounded-lg border bg-white shadow-lg">
-                        {produtosFiltrados.map((p) => (
-                          <li key={p.id}>
-                            <button
-                              onClick={() => handleAdicionarProduto(p)}
-                              className="w-full text-left px-3 py-2 text-sm hover:bg-gray-50"
-                            >
-                              {p.fabricantes?.nome} {p.atributos?.modelo ?? p.sku}
-                            </button>
-                          </li>
-                        ))}
-                      </ul>
-                    )}
+                {!travado && (
+                  <div className="mt-3">
+                    <ProdutoCombobox produtos={catalogoProdutos as any} onSelecionar={handleAdicionarProduto} />
                   </div>
                 )}
               </div>
@@ -302,7 +311,7 @@ export function ConstrutorProposta({
                       <span className="flex-1 text-sm text-gray-800">{s.nome}</span>
                       <span className="rounded-full bg-gray-100 px-2 py-0.5 text-xs text-gray-600">{LABEL_RECORRENCIA[s.recorrencia]}</span>
                       <span className="w-24 text-right text-sm font-medium text-gray-700">{formatBRL(s.preco)}</span>
-                      {!jaFinalizada && (
+                      {!travado && (
                         <button onClick={() => handleRemoverServico(s.id)} className="text-red-500 text-xs">
                           remover
                         </button>
@@ -311,7 +320,7 @@ export function ConstrutorProposta({
                   ))}
                 </div>
 
-                {!jaFinalizada && (
+                {!travado && (
                   <div className="flex items-end gap-2 mt-3">
                     <div className="flex-1">
                       <label className="mb-1 block text-xs text-gray-500">Adicionar do catálogo de serviços</label>
@@ -339,17 +348,17 @@ export function ConstrutorProposta({
                   <label className="mb-1 block text-xs text-gray-500">Forma de Pagamento</label>
                   <div className="flex gap-4 text-sm">
                     <label className="flex items-center gap-1.5">
-                      <input type="radio" checked={formaPagamento === "avista"} onChange={() => setFormaPagamento("avista")} disabled={jaFinalizada} /> À vista
+                      <input type="radio" checked={formaPagamento === "avista"} onChange={() => setFormaPagamento("avista")} disabled={travado} /> À vista
                     </label>
                     <label className="flex items-center gap-1.5">
-                      <input type="radio" checked={formaPagamento === "financiado"} onChange={() => setFormaPagamento("financiado")} disabled={jaFinalizada} /> Financiado
+                      <input type="radio" checked={formaPagamento === "financiado"} onChange={() => setFormaPagamento("financiado")} disabled={travado} /> Financiado
                     </label>
                   </div>
                 </div>
                 {formaPagamento === "financiado" && (
                   <div>
                     <label className="mb-1 block text-xs text-gray-500">Número de Parcelas</label>
-                    <input type="number" value={parcelas} disabled={jaFinalizada} onChange={(e) => setParcelas(Number(e.target.value))} className="w-full rounded-lg border p-2.5 text-sm" />
+                    <input type="number" value={parcelas} disabled={travado} onChange={(e) => setParcelas(Number(e.target.value))} className="w-full rounded-lg border p-2.5 text-sm" />
                   </div>
                 )}
                 <div>
@@ -357,7 +366,7 @@ export function ConstrutorProposta({
                   <textarea
                     rows={2}
                     value={condicoesPagamento}
-                    disabled={jaFinalizada}
+                    disabled={travado}
                     onChange={(e) => setCondicoesPagamento(e.target.value)}
                     placeholder="Ex: 50% na assinatura + 50% na instalação"
                     className="w-full rounded-lg border p-2.5 text-sm"
@@ -366,14 +375,14 @@ export function ConstrutorProposta({
                 <div className="grid grid-cols-2 gap-3">
                   <div>
                     <label className="mb-1 block text-xs text-gray-500">Validade (dias)</label>
-                    <input type="number" value={validadeDias} disabled={jaFinalizada} onChange={(e) => setValidadeDias(Number(e.target.value))} className="w-full rounded-lg border p-2.5 text-sm" />
+                    <input type="number" value={validadeDias} disabled={travado} onChange={(e) => setValidadeDias(Number(e.target.value))} className="w-full rounded-lg border p-2.5 text-sm" />
                   </div>
                   <div>
                     <label className="mb-1 block text-xs text-gray-500">Prazo de Instalação (dias)</label>
-                    <input type="number" value={prazoInstalacao} disabled={jaFinalizada} onChange={(e) => setPrazoInstalacao(Number(e.target.value))} className="w-full rounded-lg border p-2.5 text-sm" />
+                    <input type="number" value={prazoInstalacao} disabled={travado} onChange={(e) => setPrazoInstalacao(Number(e.target.value))} className="w-full rounded-lg border p-2.5 text-sm" />
                   </div>
                 </div>
-                {!jaFinalizada && (
+                {!travado && (
                   <button onClick={handleSalvarCondicoes} className="self-start rounded-lg border px-4 py-2 text-sm text-gray-700 hover:bg-gray-50">
                     Salvar condições
                   </button>
@@ -423,7 +432,7 @@ export function ConstrutorProposta({
           {!jaFinalizada ? (
             <button
               onClick={handleFinalizar}
-              disabled={finalizando || itens.length === 0}
+              disabled={travado || finalizando || itens.length === 0}
               className="mt-4 w-full rounded-lg bg-emerald-600 px-4 py-3 text-sm font-semibold text-white hover:bg-emerald-700 disabled:opacity-50"
             >
               {finalizando ? "Finalizando..." : "Finalizar e Gerar PDF"}
