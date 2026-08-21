@@ -20,11 +20,11 @@ export default async function PropostasPage() {
         <div>
           <h1 className="text-xl font-semibold text-gray-800">Orçamentos e Propostas</h1>
           <p className="mt-1 text-sm text-gray-500">
-            Toda proposta nasce de um Dimensionamento salvo para um cliente.
+            Escolha um cliente e monte a proposta — o dimensionamento pode ser feito dentro dela.
           </p>
         </div>
         <Link
-          href="/admin/dimensionamento"
+          href="/admin/propostas/novo"
           className="rounded-lg bg-blue-600 px-4 py-2 text-sm font-semibold text-white hover:bg-blue-700"
         >
           + Nova Proposta

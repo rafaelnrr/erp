@@ -80,7 +80,7 @@ function PropostaPdf({ numero, snapshot, criadoEm }: { numero: number; snapshot:
         <View style={styles.header}>
           <View>
             <Text style={styles.brand}>SolarFlow Pro</Text>
-            <Text style={styles.subtitle}>Proposta comercial de sistema fotovoltaico</Text>
+            <Text style={styles.subtitle}>{snapshot.titulo || "Proposta comercial de sistema fotovoltaico"}</Text>
           </View>
           <View style={styles.headerRight}>
             <Text style={styles.numero}>Proposta Nº {numero}</Text>

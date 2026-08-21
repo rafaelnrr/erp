@@ -171,9 +171,9 @@ export interface Database {
         };
       };
       servicos: {
-        Row: { id: string; nome: string; descricao: string | null; recorrencia_padrao: Recorrencia; preco_padrao: number; ativo: boolean };
-        Insert: { id?: string; nome: string; descricao?: string | null; recorrencia_padrao: Recorrencia; preco_padrao: number; ativo?: boolean };
-        Update: { id?: string; nome?: string; descricao?: string | null; recorrencia_padrao?: Recorrencia; preco_padrao?: number; ativo?: boolean };
+        Row: { id: string; nome: string; descricao: string | null; recorrencia_padrao: Recorrencia; tempo_execucao_valor: number | null; tempo_execucao_unidade: "horas" | "dias" | null; custo_interno: number | null; preco_padrao: number; ativo: boolean };
+        Insert: { id?: string; nome: string; descricao?: string | null; recorrencia_padrao: Recorrencia; tempo_execucao_valor?: number | null; tempo_execucao_unidade?: "horas" | "dias" | null; custo_interno?: number | null; preco_padrao: number; ativo?: boolean };
+        Update: { id?: string; nome?: string; descricao?: string | null; recorrencia_padrao?: Recorrencia; tempo_execucao_valor?: number | null; tempo_execucao_unidade?: "horas" | "dias" | null; custo_interno?: number | null; preco_padrao?: number; ativo?: boolean };
       };
       proposta_itens: {
         Row: { id: string; proposta_id: string; produto_id: string | null; categoria: string; descricao: string; quantidade: number; preco_unitario: number; ordem: number };
@@ -204,6 +204,7 @@ export interface Database {
           payback_meses: number | null;
           valor_total: number | null;
           finalizada_em: string | null;
+          titulo: string | null;
         };
         Insert: {
           id?: string;
@@ -222,6 +223,7 @@ export interface Database {
           payback_meses?: number | null;
           valor_total?: number | null;
           finalizada_em?: string | null;
+          titulo?: string | null;
         };
         Update: {
           id?: string;
@@ -240,6 +242,7 @@ export interface Database {
           payback_meses?: number | null;
           valor_total?: number | null;
           finalizada_em?: string | null;
+          titulo?: string | null;
         };
       };
     };

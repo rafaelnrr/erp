@@ -11,6 +11,7 @@ import {
   removerItemProposta,
   removerServicoProposta,
 } from "@/app/actions/propostas";
+import { CalculadoraSolarEmbutida } from "@/components/CalculadoraSolarEmbutida";
 
 interface Item {
   id: string;
@@ -75,6 +76,7 @@ export function ConstrutorProposta({
   const [aba, setAba] = useState<TabId>("equipamentos");
   const [itens, setItens] = useState<Item[]>(itensIniciais);
   const [servicos, setServicos] = useState<ServicoProposta[]>(servicosIniciais);
+  const [dimensionadorAberto, setDimensionadorAberto] = useState(false);
 
   const [condicoesPagamento, setCondicoesPagamento] = useState(propostaInicial.condicoes_pagamento ?? "");
   const [formaPagamento, setFormaPagamento] = useState<"avista" | "financiado">(propostaInicial.forma_pagamento ?? "avista");
@@ -103,6 +105,14 @@ export function ConstrutorProposta({
     const texto = `${p.sku} ${p.atributos?.modelo ?? ""} ${p.fabricantes?.nome ?? ""}`.toLowerCase();
     return produtoBusca.length > 1 && texto.includes(produtoBusca.toLowerCase());
   });
+
+  function handleItensDoDimensionamento(itensNovos: any[]) {
+    setItens((prev) => [
+      ...prev,
+      ...itensNovos.map((i) => ({ id: i.id, categoria: i.categoria, descricao: i.descricao, quantidade: Number(i.quantidade), preco_unitario: Number(i.preco_unitario) })),
+    ]);
+    setDimensionadorAberto(false);
+  }
 
   async function handleAdicionarProduto(p: Produto) {
     const res = await adicionarItemProposta(propostaId, {
@@ -184,7 +194,9 @@ export function ConstrutorProposta({
   return (
     <div className="min-h-full bg-gray-50 p-8">
       <div className="mb-6">
-        <h1 className="text-xl font-semibold text-gray-800">Construtor de Proposta {propostaInicial.numero ? `#${propostaInicial.numero}` : ""}</h1>
+        <h1 className="text-xl font-semibold text-gray-800">
+          {propostaInicial.titulo || "Construtor de Proposta"} {propostaInicial.numero ? `#${propostaInicial.numero}` : ""}
+        </h1>
         <p className="text-sm text-gray-500">{propostaInicial.clientes?.nome ?? "Cliente"}</p>
       </div>
 
@@ -215,6 +227,14 @@ export function ConstrutorProposta({
               <div>
                 <div className="flex items-center justify-between mb-3">
                   <h2 className="font-medium text-gray-800">Escopo de Fornecimento</h2>
+                  {!jaFinalizada && (
+                    <button
+                      onClick={() => setDimensionadorAberto(true)}
+                      className="rounded-lg bg-gradient-to-r from-amber-500 to-orange-500 px-4 py-2 text-sm font-bold text-white shadow-sm hover:brightness-110"
+                    >
+                      ⚡ Dimensionar Sistema
+                    </button>
+                  )}
                 </div>
                 <div className="divide-y rounded-lg border">
                   {itens.length === 0 && <p className="p-4 text-sm text-gray-500">Nenhum item adicionado.</p>}
@@ -420,6 +440,20 @@ export function ConstrutorProposta({
           )}
         </aside>
       </div>
+
+      {dimensionadorAberto && (
+        <div className="fixed inset-0 z-50 flex justify-end bg-black/50">
+          <div className="h-full w-full max-w-2xl overflow-y-auto">
+            <CalculadoraSolarEmbutida
+              propostaId={propostaId}
+              clienteId={propostaInicial.cliente_id}
+              consumoInicial={propostaInicial.clientes?.consumo_kwh_mes}
+              onFechar={() => setDimensionadorAberto(false)}
+              onConcluir={handleItensDoDimensionamento}
+            />
+          </div>
+        </div>
+      )}
     </div>
   );
 }

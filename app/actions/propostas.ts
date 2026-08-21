@@ -18,6 +18,7 @@ export interface SnapshotServico {
 }
 
 export interface ProposalSnapshot {
+  titulo: string | null;
   cliente: {
     nome: string;
     documento: string | null;
@@ -54,6 +55,38 @@ async function precoDoProduto(supabase: any, produtoId: string): Promise<number>
   return data && data[0] ? Number(data[0].preco) : 0;
 }
 
+async function montarItensDoDimensionamento(supabase: any, dim: any, propostaId: string) {
+  const { data: modulo } = await supabase.from("produtos").select("id, atributos, fabricantes(nome)").eq("id", dim.modulo_id).single();
+  const { data: inversor } = await supabase.from("produtos").select("id, atributos, fabricantes(nome)").eq("id", dim.inversor_id).single();
+
+  const itens = [];
+  if (modulo) {
+    const preco = await precoDoProduto(supabase, modulo.id);
+    itens.push({
+      proposta_id: propostaId,
+      produto_id: modulo.id,
+      categoria: "modulo",
+      descricao: `${(modulo as any).fabricantes?.nome ?? ""} ${(modulo.atributos as any)?.modelo ?? ""}`.trim(),
+      quantidade: dim.qtde_modulos,
+      preco_unitario: preco,
+      ordem: 0,
+    });
+  }
+  if (inversor) {
+    const preco = await precoDoProduto(supabase, inversor.id);
+    itens.push({
+      proposta_id: propostaId,
+      produto_id: inversor.id,
+      categoria: "inversor",
+      descricao: `${(inversor as any).fabricantes?.nome ?? ""} ${(inversor.atributos as any)?.modelo ?? ""}`.trim(),
+      quantidade: dim.qtde_inversores ?? 1,
+      preco_unitario: preco,
+      ordem: 1,
+    });
+  }
+  return itens;
+}
+
 /** Cria a proposta em rascunho e importa os itens do dimensionamento para o Construtor. */
 export async function criarPropostaRascunho(dimensionamentoId: string) {
   const supabase = await createClient();
@@ -76,35 +109,7 @@ export async function criarPropostaRascunho(dimensionamentoId: string) {
 
   if (errInsert || !proposta) return { error: errInsert?.message ?? "Falha ao criar proposta." };
 
-  const { data: modulo } = await supabase.from("produtos").select("id, atributos, fabricantes(nome)").eq("id", dim.modulo_id).single();
-  const { data: inversor } = await supabase.from("produtos").select("id, atributos, fabricantes(nome)").eq("id", dim.inversor_id).single();
-
-  const itensParaInserir = [];
-  if (modulo) {
-    const preco = await precoDoProduto(supabase, modulo.id);
-    itensParaInserir.push({
-      proposta_id: proposta.id,
-      produto_id: modulo.id,
-      categoria: "modulo",
-      descricao: `${(modulo as any).fabricantes?.nome ?? ""} ${(modulo.atributos as any)?.modelo ?? ""}`.trim(),
-      quantidade: dim.qtde_modulos,
-      preco_unitario: preco,
-      ordem: 0,
-    });
-  }
-  if (inversor) {
-    const preco = await precoDoProduto(supabase, inversor.id);
-    itensParaInserir.push({
-      proposta_id: proposta.id,
-      produto_id: inversor.id,
-      categoria: "inversor",
-      descricao: `${(inversor as any).fabricantes?.nome ?? ""} ${(inversor.atributos as any)?.modelo ?? ""}`.trim(),
-      quantidade: dim.qtde_inversores ?? 1,
-      preco_unitario: preco,
-      ordem: 1,
-    });
-  }
-
+  const itensParaInserir = await montarItensDoDimensionamento(supabase, dim, proposta.id);
   if (itensParaInserir.length > 0) {
     await supabase.from("proposta_itens").insert(itensParaInserir);
   }
@@ -112,12 +117,56 @@ export async function criarPropostaRascunho(dimensionamentoId: string) {
   return { success: true, id: proposta.id };
 }
 
+/** Cria uma proposta vazia a partir do fluxo "Nova Proposta" (cliente + título), sem dimensionamento ainda. */
+export async function criarPropostaVazia(clienteId: string, titulo?: string) {
+  const supabase = await createClient();
+  const { data: authData } = await supabase.auth.getUser();
+  if (!authData.user) return { error: "Não autorizado" };
+
+  const { data: proposta, error } = await supabase
+    .from("propostas")
+    .insert({ vendedor_id: authData.user.id, cliente_id: clienteId, titulo: titulo || null, status: "rascunho" })
+    .select("id")
+    .single();
+
+  if (error || !proposta) return { error: error?.message ?? "Falha ao criar proposta." };
+  return { success: true as const, id: proposta.id };
+}
+
+/**
+ * Usado pelo botão "Dimensionar Sistema" dentro do Construtor: pega o resultado
+ * de um dimensionamento já salvo e adiciona módulo+inversor como itens na
+ * proposta que já está aberta, sem criar uma proposta nova.
+ */
+export async function adicionarItensDoDimensionamento(propostaId: string, dimensionamentoId: string) {
+  const supabase = await createClient();
+
+  const { data: dim, error: errDim } = await supabase
+    .from("dimensionamentos")
+    .select("id, modulo_id, inversor_id, qtde_modulos, qtde_inversores")
+    .eq("id", dimensionamentoId)
+    .single();
+  if (errDim || !dim) return { error: "Dimensionamento não encontrado." };
+
+  const itens = await montarItensDoDimensionamento(supabase, dim, propostaId);
+  if (itens.length === 0) return { error: "Não foi possível montar os itens do dimensionamento." };
+
+  const { data: inseridos, error: errInsert } = await supabase.from("proposta_itens").insert(itens).select("*");
+  if (errInsert) return { error: errInsert.message };
+
+  // vincula a proposta a este dimensionamento (usado depois pra calcular
+  // potência instalada e economia/payback na finalização)
+  await supabase.from("propostas").update({ dimensionamento_id: dimensionamentoId }).eq("id", propostaId).is("dimensionamento_id", null);
+
+  return { success: true as const, itens: inseridos };
+}
+
 export async function listarPropostaCompleta(propostaId: string) {
   const supabase = await createClient();
 
   const { data: proposta, error } = await supabase
     .from("propostas")
-    .select("*, clientes(nome, documento, cidade, uf, grupo_tarifario, classe_b, subgrupo_a, tarifa_kwh, tarifa_kwh_fora_ponta), dimensionamentos(consumo_alvo, geracao_estimada, qtde_modulos, tipo_ligacao)")
+    .select("*, clientes(nome, documento, cidade, uf, consumo_kwh_mes, grupo_tarifario, classe_b, subgrupo_a, tarifa_kwh, tarifa_kwh_fora_ponta), dimensionamentos(consumo_alvo, geracao_estimada, qtde_modulos, tipo_ligacao)")
     .eq("id", propostaId)
     .single();
 
@@ -225,6 +274,7 @@ export async function finalizarProposta(propostaId: string) {
   const { economiaAno1, paybackMeses } = calcularEconomiaEPayback(cliente, dimensionamento?.geracao_estimada, valorTotal);
 
   const snapshot: ProposalSnapshot = {
+    titulo: proposta.titulo ?? null,
     cliente: {
       nome: cliente?.nome ?? "—",
       documento: cliente?.documento ?? null,
