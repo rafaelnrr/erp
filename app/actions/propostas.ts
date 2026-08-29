@@ -7,6 +7,7 @@ import type { Json } from "@/types/supabase";
 export interface SnapshotItem {
   categoria: string;
   descricao: string;
+  unidade: string;
   quantidade: number;
   preco_unitario: number;
   subtotal: number;
@@ -38,6 +39,12 @@ export interface ProposalSnapshot {
     hsp: number | null;
     perdas_pct: number | null;
     area_estimada_m2: number | null;
+    modulo_potencia_w: number | null;
+    modulo_fabricante: string | null;
+    inversor_potencia_w: number | null;
+    inversor_fabricante: string | null;
+    qtde_inversores: number | null;
+    estrutura_fabricante: string | null;
   } | null;
   itens: SnapshotItem[];
   servicos: SnapshotServico[];
@@ -175,7 +182,7 @@ export async function listarPropostaCompleta(propostaId: string) {
 
   const { data: proposta, error } = await supabase
     .from("propostas")
-    .select("*, clientes(nome, documento, cidade, uf, consumo_kwh_mes, grupo_tarifario, classe_b, subgrupo_a, tarifa_kwh, tarifa_kwh_fora_ponta), dimensionamentos(consumo_alvo, geracao_estimada, qtde_modulos, tipo_ligacao, hsp, perdas_pct, area_estimada_m2)")
+    .select("*, clientes(nome, documento, cidade, uf, consumo_kwh_mes, grupo_tarifario, classe_b, subgrupo_a, tarifa_kwh, tarifa_kwh_fora_ponta), dimensionamentos(consumo_alvo, geracao_estimada, qtde_modulos, qtde_inversores, tipo_ligacao, hsp, perdas_pct, area_estimada_m2)")
     .eq("id", propostaId)
     .single();
 
@@ -267,16 +274,33 @@ export async function finalizarProposta(propostaId: string) {
   const dimensionamento = (proposta as any).dimensionamentos;
 
   const itemModulo = itens.find((i) => i.categoria === "modulo" && i.produto_id);
+  const itemInversor = itens.find((i) => i.categoria === "inversor" && i.produto_id);
+  const itemEstrutura = itens.find((i) => i.categoria === "estrutura" && i.produto_id);
+  const idsProdutosTecnicos = [itemModulo?.produto_id, itemInversor?.produto_id, itemEstrutura?.produto_id].filter(
+    (id): id is string => !!id
+  );
+
+  const { data: produtosTecnicos } = idsProdutosTecnicos.length
+    ? await supabase.from("produtos").select("id, atributos, fabricantes(nome)").in("id", idsProdutosTecnicos)
+    : { data: [] as any[] };
+
+  const produtoPorId = new Map((produtosTecnicos ?? []).map((p: any) => [p.id, p]));
+  const produtoModulo = itemModulo?.produto_id ? produtoPorId.get(itemModulo.produto_id) : null;
+  const produtoInversor = itemInversor?.produto_id ? produtoPorId.get(itemInversor.produto_id) : null;
+  const produtoEstrutura = itemEstrutura?.produto_id ? produtoPorId.get(itemEstrutura.produto_id) : null;
+
+  const moduloPotenciaW = Number(produtoModulo?.atributos?.potencia_w) || 0;
   let potenciaInstaladaKwp: number | null = null;
-  if (itemModulo?.produto_id) {
-    const { data: produtoModulo } = await supabase.from("produtos").select("atributos").eq("id", itemModulo.produto_id).single();
-    const potenciaW = Number((produtoModulo?.atributos as any)?.potencia_w) || 0;
-    if (potenciaW > 0) potenciaInstaladaKwp = (potenciaW * Number(itemModulo.quantidade)) / 1000;
+  if (itemModulo && moduloPotenciaW > 0) {
+    potenciaInstaladaKwp = (moduloPotenciaW * Number(itemModulo.quantidade)) / 1000;
   }
+
+  const UNIDADE_POR_CATEGORIA: Record<string, string> = { cabo: "m" };
 
   const snapshotItens: SnapshotItem[] = itens.map((i) => ({
     categoria: i.categoria,
     descricao: i.descricao,
+    unidade: UNIDADE_POR_CATEGORIA[i.categoria] ?? "un",
     quantidade: Number(i.quantidade),
     preco_unitario: Number(i.preco_unitario),
     subtotal: Number(i.quantidade) * Number(i.preco_unitario),
@@ -321,6 +345,12 @@ export async function finalizarProposta(propostaId: string) {
           hsp: dimensionamento.hsp ?? null,
           perdas_pct: dimensionamento.perdas_pct ?? null,
           area_estimada_m2: dimensionamento.area_estimada_m2 ?? null,
+          modulo_potencia_w: moduloPotenciaW || null,
+          modulo_fabricante: produtoModulo?.fabricantes?.nome ?? null,
+          inversor_potencia_w: Number(produtoInversor?.atributos?.potencia_w) || null,
+          inversor_fabricante: produtoInversor?.fabricantes?.nome ?? null,
+          qtde_inversores: itemInversor ? Number(itemInversor.quantidade) : dimensionamento.qtde_inversores ?? null,
+          estrutura_fabricante: produtoEstrutura?.fabricantes?.nome ?? null,
         }
       : null,
     itens: snapshotItens,
