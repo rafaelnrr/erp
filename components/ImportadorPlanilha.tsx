@@ -1,8 +1,16 @@
 "use client";
 
-import { useState } from "react";
+import { useRef, useState } from "react";
 import { useRouter } from "next/navigation";
+import { UploadCloud, FileSpreadsheet } from "lucide-react";
+import { Toast, type ToastState } from "@/components/Toast";
 import type { ResultadoImportacao } from "@/app/actions/importarProdutos";
+
+const EXTENSOES_ACEITAS = [".xlsx", ".csv"];
+
+function extensaoValida(nome: string) {
+  return EXTENSOES_ACEITAS.some((ext) => nome.toLowerCase().endsWith(ext));
+}
 
 export function ImportadorPlanilha({
   descricao,
@@ -14,9 +22,33 @@ export function ImportadorPlanilha({
   acao: (formData: FormData) => Promise<ResultadoImportacao>;
 }) {
   const [arquivo, setArquivo] = useState<File | null>(null);
+  const [arrastando, setArrastando] = useState(false);
   const [enviando, setEnviando] = useState(false);
   const [resultado, setResultado] = useState<ResultadoImportacao | null>(null);
+  const [toast, setToast] = useState<ToastState | null>(null);
+  const inputRef = useRef<HTMLInputElement>(null);
   const router = useRouter();
+
+  function selecionarArquivo(f: File | null) {
+    setResultado(null);
+    if (!f) {
+      setArquivo(null);
+      return;
+    }
+    if (!extensaoValida(f.name)) {
+      setToast({ tipo: "erro", mensagem: "Formato não suportado. Envie um arquivo .xlsx ou .csv." });
+      setArquivo(null);
+      return;
+    }
+    setArquivo(f);
+  }
+
+  function handleDrop(e: React.DragEvent<HTMLDivElement>) {
+    e.preventDefault();
+    setArrastando(false);
+    const f = e.dataTransfer.files?.[0];
+    if (f) selecionarArquivo(f);
+  }
 
   async function handleImportar() {
     if (!arquivo) return;
@@ -27,8 +59,21 @@ export function ImportadorPlanilha({
     const res = await acao(fd);
     setEnviando(false);
     setResultado(res);
-    if (res.ok && (res.criados > 0 || res.atualizados > 0)) {
+
+    if (!res.ok) {
+      setToast({ tipo: "erro", mensagem: res.erro ?? "Falha ao importar a planilha." });
+      return;
+    }
+    setToast({
+      tipo: res.comErro > 0 ? "erro" : "sucesso",
+      mensagem:
+        res.comErro > 0
+          ? `Importação concluída com ${res.comErro} erro(s). ${res.criados} criado(s), ${res.atualizados} atualizado(s).`
+          : `Importação concluída: ${res.criados} criado(s), ${res.atualizados} atualizado(s).`,
+    });
+    if (res.criados > 0 || res.atualizados > 0) {
       router.refresh();
+      setArquivo(null);
     }
   }
 
@@ -40,22 +85,45 @@ export function ImportadorPlanilha({
         Baixar planilha modelo
       </a>
 
-      <div className="mt-4 flex flex-col sm:flex-row gap-3">
+      <div
+        onDragOver={(e) => {
+          e.preventDefault();
+          setArrastando(true);
+        }}
+        onDragLeave={() => setArrastando(false)}
+        onDrop={handleDrop}
+        onClick={() => inputRef.current?.click()}
+        className={`mt-4 flex flex-col items-center justify-center gap-2 rounded-xl border-2 border-dashed p-8 text-center cursor-pointer transition-colors ${
+          arrastando
+            ? "border-amber-500 bg-amber-50 dark:bg-amber-500/10"
+            : "border-slate-300 dark:border-slate-700 hover:border-amber-400 dark:hover:border-amber-500"
+        }`}
+      >
         <input
+          ref={inputRef}
           type="file"
-          accept=".xlsx"
-          onChange={(e) => {
-            setArquivo(e.target.files?.[0] ?? null);
-            setResultado(null);
-          }}
-          className="input-standard w-full sm:flex-1"
+          accept=".xlsx,.csv"
+          onChange={(e) => selecionarArquivo(e.target.files?.[0] ?? null)}
+          className="hidden"
         />
-        <button onClick={handleImportar} disabled={!arquivo || enviando} className="btn-primary shrink-0">
-          {enviando ? "Importando..." : "Importar"}
-        </button>
+        {arquivo ? (
+          <>
+            <FileSpreadsheet className="w-8 h-8 text-amber-500" />
+            <p className="text-sm font-medium text-slate-700 dark:text-slate-300">{arquivo.name}</p>
+            <p className="text-xs text-slate-500 dark:text-slate-400">Clique ou arraste outro arquivo para substituir</p>
+          </>
+        ) : (
+          <>
+            <UploadCloud className="w-8 h-8 text-slate-400" />
+            <p className="text-sm font-medium text-slate-600 dark:text-slate-300">Arraste a planilha aqui ou clique para escolher</p>
+            <p className="text-xs text-slate-500 dark:text-slate-400">Formatos aceitos: .xlsx ou .csv</p>
+          </>
+        )}
       </div>
 
-      {resultado && !resultado.ok && <p className="mt-4 text-sm text-red-600 dark:text-red-400">{resultado.erro}</p>}
+      <button onClick={handleImportar} disabled={!arquivo || enviando} className="btn-primary mt-4 w-full">
+        {enviando ? "Importando..." : "Importar"}
+      </button>
 
       {resultado?.ok && (
         <div className="mt-4">
@@ -75,6 +143,8 @@ export function ImportadorPlanilha({
           )}
         </div>
       )}
+
+      <Toast toast={toast} onClose={() => setToast(null)} />
     </div>
   );
 }

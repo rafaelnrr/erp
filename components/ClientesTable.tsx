@@ -1,6 +1,7 @@
 "use client";
 
 import { useMemo, useState } from "react";
+import Link from "next/link";
 import { NovoClienteDrawer } from "@/components/NovoClienteDrawer";
 import { ExcluirClienteButton } from "@/components/ExcluirClienteButton";
 import type { Tables } from "@/types/supabase";
@@ -76,7 +77,11 @@ export function ClientesTable({
                 const podeEditar = isAdmin || (isEditor && dono);
                 return (
                   <tr key={c.id}>
-                    <td className="font-medium text-slate-800 dark:text-slate-200">{c.nome}</td>
+                    <td className="font-medium">
+                      <Link href={`/admin/clientes/${c.id}`} className="text-slate-800 dark:text-slate-200 hover:text-amber-600 dark:hover:text-amber-500 hover:underline">
+                        {c.nome}
+                      </Link>
+                    </td>
                     <td>{c.documento || "—"}</td>
                     <td>{c.consumo_kwh_mes ?? "—"}</td>
                     <td>{c.cidade ? `${c.cidade}/${c.uf ?? "—"}` : "—"}</td>

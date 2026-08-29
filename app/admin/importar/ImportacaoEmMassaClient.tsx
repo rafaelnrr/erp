@@ -24,7 +24,7 @@ export function ImportacaoEmMassaClient() {
         <div>
           <h1 className="text-xl font-semibold text-slate-800 dark:text-slate-100">Importação em Massa</h1>
           <p className="text-sm text-slate-500 dark:text-slate-400">
-            Adicione produtos, serviços ou fabricantes em lote a partir de uma planilha .xlsx.
+            Adicione produtos, serviços ou fabricantes em lote a partir de uma planilha .xlsx ou .csv.
           </p>
         </div>
         <ThemeToggle />
@@ -48,21 +48,21 @@ export function ImportacaoEmMassaClient() {
 
       {aba === "produtos" && (
         <ImportadorPlanilha
-          descricao="Envie um .xlsx com as colunas SKU e Categoria (obrigatórias) e, opcionalmente, Fabricante, Modelo, Potência, CD/Origem, Preço e Quantidade. Produtos com SKU já existente são atualizados; os demais são criados."
+          descricao="Envie um .xlsx ou .csv com as colunas SKU e Categoria (obrigatórias) e, opcionalmente, Fabricante, Modelo, Potência, CD/Origem, Preço e Quantidade. Produtos com SKU já existente são atualizados; os demais são criados."
           templateUrl="/api/produtos/template"
           acao={importarPlanilhaProdutos}
         />
       )}
       {aba === "servicos" && (
         <ImportadorPlanilha
-          descricao="Envie um .xlsx com as colunas Nome e Preço de Venda (obrigatórias) e, opcionalmente, Descrição, Recorrência, Tempo de Execução, Custo Interno e Ativo. Serviços com nome já existente são atualizados; os demais são criados."
+          descricao="Envie um .xlsx ou .csv com as colunas Nome e Preço de Venda (obrigatórias) e, opcionalmente, Descrição, Recorrência, Tempo de Execução, Custo Interno e Ativo. Serviços com nome já existente são atualizados; os demais são criados."
           templateUrl="/api/servicos/template"
           acao={importarPlanilhaServicos}
         />
       )}
       {aba === "fabricantes" && (
         <ImportadorPlanilha
-          descricao="Envie um .xlsx com uma coluna Nome. Fabricantes com nome já existente são ignorados (não há outros dados para atualizar); os demais são criados."
+          descricao="Envie um .xlsx ou .csv com uma coluna Nome. Fabricantes com nome já existente são ignorados (não há outros dados para atualizar); os demais são criados."
           templateUrl="/api/fabricantes/template"
           acao={importarPlanilhaFabricantes}
         />

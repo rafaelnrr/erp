@@ -4,6 +4,7 @@ import ExcelJS from "exceljs";
 import { revalidatePath } from "next/cache";
 import { createClient } from "@/utils/supabase/server";
 import { mapearCabecalhos } from "@/utils/planilha";
+import { lerPlanilha } from "@/utils/lerPlanilha";
 import type { LinhaResultado, ResultadoImportacao } from "@/app/actions/importarProdutos";
 
 function textoCelula(valor: ExcelJS.CellValue): string {
@@ -19,19 +20,20 @@ export async function importarPlanilhaFabricantes(formData: FormData): Promise<R
     return { ok: false, erro: "Nenhum arquivo enviado.", linhas: [], criados: 0, atualizados: 0, comErro: 0 };
   }
 
-  const supabase = await createClient();
-
-  let workbook: ExcelJS.Workbook;
-  try {
-    const buffer = Buffer.from(await arquivo.arrayBuffer());
-    workbook = new ExcelJS.Workbook();
-    // exceljs traz sua própria cópia de @types/node, com um tipo Buffer incompatível em compilação (mas idêntico em runtime)
-    await workbook.xlsx.load(buffer as any);
-  } catch {
-    return { ok: false, erro: "Não foi possível ler o arquivo. Envie um .xlsx válido.", linhas: [], criados: 0, atualizados: 0, comErro: 0 };
+  if (!/\.(xlsx|csv)$/i.test(arquivo.name)) {
+    return { ok: false, erro: "Formato não suportado. Envie um arquivo .xlsx ou .csv.", linhas: [], criados: 0, atualizados: 0, comErro: 0 };
   }
 
-  const planilha = workbook.worksheets[0];
+  const supabase = await createClient();
+
+  let planilha: ExcelJS.Worksheet | null;
+  try {
+    const buffer = Buffer.from(await arquivo.arrayBuffer());
+    planilha = await lerPlanilha(buffer, arquivo.name);
+  } catch {
+    return { ok: false, erro: "Não foi possível ler o arquivo. Confira se o .xlsx/.csv não está corrompido.", linhas: [], criados: 0, atualizados: 0, comErro: 0 };
+  }
+
   if (!planilha || planilha.rowCount < 2) {
     return { ok: false, erro: "A planilha está vazia ou não tem linhas de dados.", linhas: [], criados: 0, atualizados: 0, comErro: 0 };
   }

@@ -203,3 +203,45 @@ export async function listarValoresDistintos(coluna: "tipo_telhado" | "estrutura
   const valores = new Set((data as any[]).map((r) => r[coluna]).filter(Boolean));
   return Array.from(valores) as string[];
 }
+
+export interface FotoSurveyAssinada {
+  id: string;
+  descricao: string;
+  url: string | null;
+}
+
+export interface ClienteCompleto {
+  cliente: Record<string, any>;
+  faturaUrl: string | null;
+  fotos: FotoSurveyAssinada[];
+}
+
+const VALIDADE_URL_ASSINADA_SEG = 60 * 60; // 1h — só para exibir/baixar na tela, não é link permanente
+
+/** Busca o cliente com URLs assinadas (temporárias) para a fatura e as fotos de survey. RLS decide o que é visível. */
+export async function buscarClienteCompleto(id: string): Promise<ClienteCompleto | null> {
+  const supabase = await createClient();
+
+  const { data: cliente, error } = await supabase.from("clientes").select("*").eq("id", id).single();
+  if (error || !cliente) return null;
+
+  const { data: fotosRaw } = await supabase
+    .from("cliente_fotos_survey")
+    .select("id, descricao, storage_path")
+    .eq("cliente_id", id)
+    .order("created_at", { ascending: true });
+
+  let faturaUrl: string | null = null;
+  if (cliente.fatura_path) {
+    const { data } = await supabase.storage.from("faturas").createSignedUrl(cliente.fatura_path, VALIDADE_URL_ASSINADA_SEG);
+    faturaUrl = data?.signedUrl ?? null;
+  }
+
+  const fotos: FotoSurveyAssinada[] = [];
+  for (const foto of fotosRaw ?? []) {
+    const { data } = await supabase.storage.from("site-survey").createSignedUrl(foto.storage_path, VALIDADE_URL_ASSINADA_SEG);
+    fotos.push({ id: foto.id, descricao: foto.descricao, url: data?.signedUrl ?? null });
+  }
+
+  return { cliente, faturaUrl, fotos };
+}
