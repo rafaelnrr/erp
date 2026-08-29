@@ -2,60 +2,71 @@
 
 import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
-import { criarCliente, listarValoresDistintos } from "@/app/actions/clientes";
+import { criarCliente, editarCliente, listarValoresDistintos } from "@/app/actions/clientes";
 import { buscarEnderecoPorCep } from "@/utils/cep";
 import { CreatableSelect } from "@/components/CreatableSelect";
 import { FileDropzone } from "@/components/FileDropzone";
 import { SiteSurveyUpload, type FotoSurvey } from "@/components/SiteSurveyUpload";
 import { usePerfil } from "@/hooks/usePerfil";
+import type { Tables } from "@/types/supabase";
+
+type ClienteExistente = Tables<"clientes">;
 
 const TIPOS_TELHADO_PADRAO = ["Cerâmica", "Fibra Cimento", "Metálico", "Laje", "Solo"];
 const ESTRUTURAS_PADRAO = ["Madeira", "Metálica"];
 const CONCESSIONARIAS_PADRAO = ["CPFL", "Enel", "Light", "Cemig", "Copel", "Coelba", "Celesc", "Equatorial", "Neoenergia"];
 
-const TABS = [
+const TABS_CRIAR = [
   { id: "dados", label: "① Dados" },
   { id: "endereco", label: "② Endereço" },
   { id: "tecnico", label: "③ Técnico" },
   { id: "survey", label: "④ Survey" },
 ] as const;
 
-type TabId = (typeof TABS)[number]["id"];
+const TABS_EDITAR = [
+  { id: "dados", label: "① Dados" },
+  { id: "endereco", label: "② Endereço" },
+  { id: "tecnico", label: "③ Técnico" },
+] as const;
 
-export function NovoClienteDrawer() {
+type TabId = "dados" | "endereco" | "tecnico" | "survey";
+
+export function NovoClienteDrawer({ cliente }: { cliente?: ClienteExistente } = {}) {
   const router = useRouter();
   const { podeEditar } = usePerfil();
+  const modoEdicao = !!cliente;
+  const TABS = modoEdicao ? TABS_EDITAR : TABS_CRIAR;
   const [aberto, setAberto] = useState(false);
   const [aba, setAba] = useState<TabId>("dados");
   const [salvando, setSalvando] = useState(false);
   const [erro, setErro] = useState<string | null>(null);
 
-  const [nome, setNome] = useState("");
-  const [documento, setDocumento] = useState("");
-  const [consumo, setConsumo] = useState("");
+  const [nome, setNome] = useState(cliente?.nome ?? "");
+  const [documento, setDocumento] = useState(cliente?.documento ?? "");
+  const [consumo, setConsumo] = useState(cliente?.consumo_kwh_mes != null ? String(cliente.consumo_kwh_mes) : "");
 
-  const [cep, setCep] = useState("");
-  const [rua, setRua] = useState("");
-  const [numero, setNumero] = useState("");
-  const [bairro, setBairro] = useState("");
-  const [cidade, setCidade] = useState("");
-  const [uf, setUf] = useState("");
-  const [zona, setZona] = useState<"urbana" | "rural">("urbana");
+  const [cep, setCep] = useState(cliente?.cep ?? "");
+  const [rua, setRua] = useState(cliente?.rua ?? "");
+  const [numero, setNumero] = useState(cliente?.numero ?? "");
+  const [bairro, setBairro] = useState(cliente?.bairro ?? "");
+  const [cidade, setCidade] = useState(cliente?.cidade ?? "");
+  const [uf, setUf] = useState(cliente?.uf ?? "");
+  const [zona, setZona] = useState<"urbana" | "rural">((cliente?.zona as "urbana" | "rural") ?? "urbana");
   const [cepStatus, setCepStatus] = useState<"idle" | "buscando" | "nao-encontrado">("idle");
 
-  const [concessionaria, setConcessionaria] = useState("");
-  const [tipoTelhado, setTipoTelhado] = useState("");
-  const [estruturaTelhado, setEstruturaTelhado] = useState("");
+  const [concessionaria, setConcessionaria] = useState(cliente?.concessionaria ?? "");
+  const [tipoTelhado, setTipoTelhado] = useState(cliente?.tipo_telhado ?? "");
+  const [estruturaTelhado, setEstruturaTelhado] = useState(cliente?.estrutura_telhado ?? "");
   const [fatura, setFatura] = useState<File | null>(null);
-  const [observacoes, setObservacoes] = useState("");
+  const [observacoes, setObservacoes] = useState(cliente?.observacoes ?? "");
 
-  const [grupoTarifario, setGrupoTarifario] = useState<"A" | "B" | "">("");
-  const [classeB, setClasseB] = useState("");
-  const [subgrupoA, setSubgrupoA] = useState("");
-  const [modalidadeA, setModalidadeA] = useState("");
-  const [tarifaKwh, setTarifaKwh] = useState("");
-  const [tarifaKwhPonta, setTarifaKwhPonta] = useState("");
-  const [tarifaKwhForaPonta, setTarifaKwhForaPonta] = useState("");
+  const [grupoTarifario, setGrupoTarifario] = useState<"A" | "B" | "">((cliente?.grupo_tarifario as "A" | "B") ?? "");
+  const [classeB, setClasseB] = useState(cliente?.classe_b ?? "");
+  const [subgrupoA, setSubgrupoA] = useState(cliente?.subgrupo_a ?? "");
+  const [modalidadeA, setModalidadeA] = useState(cliente?.modalidade_tarifaria_a ?? "");
+  const [tarifaKwh, setTarifaKwh] = useState(cliente?.tarifa_kwh != null ? String(cliente.tarifa_kwh) : "");
+  const [tarifaKwhPonta, setTarifaKwhPonta] = useState(cliente?.tarifa_kwh_ponta != null ? String(cliente.tarifa_kwh_ponta) : "");
+  const [tarifaKwhForaPonta, setTarifaKwhForaPonta] = useState(cliente?.tarifa_kwh_fora_ponta != null ? String(cliente.tarifa_kwh_fora_ponta) : "");
 
   const [fotos, setFotos] = useState<FotoSurvey[]>([]);
 
@@ -87,11 +98,11 @@ export function NovoClienteDrawer() {
   const podeSalvar = nome.trim() !== "" && consumo !== "" && !fotosSemDescricao;
 
   function resetar() {
-    setNome(""); setDocumento(""); setConsumo("");
-    setCep(""); setRua(""); setNumero(""); setBairro(""); setCidade(""); setUf(""); setZona("urbana");
-    setConcessionaria(""); setTipoTelhado(""); setEstruturaTelhado(""); setFatura(null); setObservacoes("");
-    setGrupoTarifario(""); setClasseB(""); setSubgrupoA(""); setModalidadeA("");
-    setTarifaKwh(""); setTarifaKwhPonta(""); setTarifaKwhForaPonta("");
+    setNome(cliente?.nome ?? ""); setDocumento(cliente?.documento ?? ""); setConsumo(cliente?.consumo_kwh_mes != null ? String(cliente.consumo_kwh_mes) : "");
+    setCep(cliente?.cep ?? ""); setRua(cliente?.rua ?? ""); setNumero(cliente?.numero ?? ""); setBairro(cliente?.bairro ?? ""); setCidade(cliente?.cidade ?? ""); setUf(cliente?.uf ?? ""); setZona((cliente?.zona as "urbana" | "rural") ?? "urbana");
+    setConcessionaria(cliente?.concessionaria ?? ""); setTipoTelhado(cliente?.tipo_telhado ?? ""); setEstruturaTelhado(cliente?.estrutura_telhado ?? ""); setFatura(null); setObservacoes(cliente?.observacoes ?? "");
+    setGrupoTarifario((cliente?.grupo_tarifario as "A" | "B") ?? ""); setClasseB(cliente?.classe_b ?? ""); setSubgrupoA(cliente?.subgrupo_a ?? ""); setModalidadeA(cliente?.modalidade_tarifaria_a ?? "");
+    setTarifaKwh(cliente?.tarifa_kwh != null ? String(cliente.tarifa_kwh) : ""); setTarifaKwhPonta(cliente?.tarifa_kwh_ponta != null ? String(cliente.tarifa_kwh_ponta) : ""); setTarifaKwhForaPonta(cliente?.tarifa_kwh_fora_ponta != null ? String(cliente.tarifa_kwh_fora_ponta) : "");
     setFotos([]); setAba("dados"); setErro(null);
   }
 
@@ -128,14 +139,14 @@ export function NovoClienteDrawer() {
       fd.append("foto_descricao", f.descricao);
     }
 
-    const res = await criarCliente(fd);
+    const res = modoEdicao ? await editarCliente(cliente!.id, fd) : await criarCliente(fd);
     setSalvando(false);
 
     if (res.error) {
       setErro(res.error);
       return;
     }
-    resetar();
+    if (!modoEdicao) resetar();
     setAberto(false);
     router.refresh();
   }
@@ -143,12 +154,24 @@ export function NovoClienteDrawer() {
   return (
     <>
       {podeEditar && (
-        <button
-          onClick={() => setAberto(true)}
-          className="btn-primary"
-        >
-          + Novo Cliente
-        </button>
+        modoEdicao ? (
+          <button
+            onClick={() => setAberto(true)}
+            title="Editar cliente"
+            className="inline-flex items-center justify-center w-8 h-8 rounded-full text-slate-500 hover:text-slate-700 hover:bg-slate-100 dark:text-slate-400 dark:hover:text-slate-200 dark:hover:bg-slate-700 transition-colors"
+          >
+            <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15.232 5.232l3.536 3.536m-2.036-5.036a2.5 2.5 0 113.536 3.536L6.5 21.036H3v-3.572L16.732 3.732z" />
+            </svg>
+          </button>
+        ) : (
+          <button
+            onClick={() => setAberto(true)}
+            className="btn-primary"
+          >
+            + Novo Cliente
+          </button>
+        )
       )}
 
       {aberto && (
@@ -167,7 +190,7 @@ export function NovoClienteDrawer() {
             />
 
             <div className="flex items-center justify-between p-5 border-b border-[#1e293b]">
-              <h2 className="text-white text-lg font-semibold">Novo Cliente</h2>
+              <h2 className="text-white text-lg font-semibold">{modoEdicao ? "Editar Cliente" : "Novo Cliente"}</h2>
               <button onClick={() => setAberto(false)} className="text-[#94a3b8] hover:text-white">✕</button>
             </div>
 
@@ -370,7 +393,7 @@ export function NovoClienteDrawer() {
                 disabled={!podeSalvar || salvando}
                 className="px-4 py-2 text-sm rounded-lg bg-[#22c55e] text-black font-semibold disabled:opacity-50"
               >
-                {salvando ? "Salvando..." : "Salvar Cliente"}
+                {salvando ? "Salvando..." : modoEdicao ? "Salvar Alterações" : "Salvar Cliente"}
               </button>
             </div>
           </div>

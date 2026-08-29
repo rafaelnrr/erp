@@ -99,6 +99,95 @@ export async function criarCliente(formData: FormData) {
   return { success: true };
 }
 
+export async function editarCliente(id: string, formData: FormData) {
+  const supabase = await createClient();
+
+  const nome = formData.get("nome") as string;
+  const documento = formData.get("documento") as string;
+  const consumo = Number(formData.get("consumo_kwh_mes"));
+
+  const cep = (formData.get("cep") as string) || null;
+  const rua = (formData.get("rua") as string) || null;
+  const numero = (formData.get("numero") as string) || null;
+  const bairro = (formData.get("bairro") as string) || null;
+  const cidade = (formData.get("cidade") as string) || null;
+  const uf = (formData.get("uf") as string) || null;
+  const zona = (formData.get("zona") as string) || "urbana";
+  const concessionaria = (formData.get("concessionaria") as string) || null;
+  const tipoTelhado = (formData.get("tipo_telhado") as string) || null;
+  const estruturaTelhado = (formData.get("estrutura_telhado") as string) || null;
+  const observacoes = (formData.get("observacoes") as string) || null;
+
+  const grupoTarifario = (formData.get("grupo_tarifario") as string) || null;
+  const classeB = (formData.get("classe_b") as string) || null;
+  const subgrupoA = (formData.get("subgrupo_a") as string) || null;
+  const modalidadeTarifariaA = (formData.get("modalidade_tarifaria_a") as string) || null;
+  const tarifaKwh = formData.get("tarifa_kwh") ? Number(formData.get("tarifa_kwh")) : null;
+  const tarifaKwhPonta = formData.get("tarifa_kwh_ponta") ? Number(formData.get("tarifa_kwh_ponta")) : null;
+  const tarifaKwhForaPonta = formData.get("tarifa_kwh_fora_ponta") ? Number(formData.get("tarifa_kwh_fora_ponta")) : null;
+
+  const { error } = await supabase
+    .from("clientes")
+    .update({
+      nome,
+      documento,
+      consumo_kwh_mes: consumo,
+      cep,
+      rua,
+      numero,
+      bairro,
+      cidade,
+      uf,
+      zona,
+      concessionaria,
+      tipo_telhado: tipoTelhado,
+      estrutura_telhado: estruturaTelhado,
+      observacoes,
+      grupo_tarifario: grupoTarifario as any,
+      classe_b: classeB as any,
+      subgrupo_a: subgrupoA as any,
+      modalidade_tarifaria_a: modalidadeTarifariaA as any,
+      tarifa_kwh: tarifaKwh,
+      tarifa_kwh_ponta: tarifaKwhPonta,
+      tarifa_kwh_fora_ponta: tarifaKwhForaPonta,
+    })
+    .eq("id", id);
+
+  if (error) return { error: error.message };
+
+  const fatura = formData.get("fatura") as File | null;
+  if (fatura && fatura.size > 0) {
+    const { data: authData } = await supabase.auth.getUser();
+    const path = `${authData.user?.id}/${id}/fatura-${Date.now()}-${fatura.name}`;
+    const { error: errUpload } = await supabase.storage.from("faturas").upload(path, fatura);
+    if (!errUpload) {
+      await supabase.from("clientes").update({ fatura_path: path }).eq("id", id);
+    }
+  }
+
+  revalidatePath("/admin/clientes");
+  return { success: true };
+}
+
+/** Exclui um cliente. O banco bloqueia (erro de FK) se houver propostas/dimensionamentos vinculados. */
+export async function excluirCliente(id: string) {
+  const supabase = await createClient();
+  const { data, error } = await supabase.from("clientes").delete().eq("id", id).select("id");
+
+  if (error) {
+    if (error.code === "23503") {
+      return { error: "Não é possível excluir: este cliente possui propostas ou dimensionamentos vinculados." };
+    }
+    return { error: error.message };
+  }
+  if (!data || data.length === 0) {
+    return { error: "Não foi possível excluir: você não tem permissão para excluir este cliente." };
+  }
+
+  revalidatePath("/admin/clientes");
+  return { success: true };
+}
+
 export async function listarClientes() {
   const supabase = await createClient();
   const { data, error } = await supabase.from("clientes").select("*").order("nome", { ascending: true });

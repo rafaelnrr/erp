@@ -2,14 +2,7 @@
 
 import { useState } from "react";
 import { atualizarStatusProposta } from "@/app/actions/propostas";
-
-const CORES: Record<string, string> = {
-  gerada: "bg-gray-100 text-gray-700",
-  enviada: "bg-blue-100 text-blue-700",
-  aceita: "bg-green-100 text-green-700",
-  recusada: "bg-red-100 text-red-700",
-  expirada: "bg-yellow-100 text-yellow-700",
-};
+import { CORES_STATUS_PROPOSTA } from "@/utils/statusProposta";
 
 export function StatusPropostaSelect({
   id,
@@ -37,7 +30,7 @@ export function StatusPropostaSelect({
       value={status}
       disabled={salvando}
       onChange={(e) => handleChange(e.target.value)}
-      className={`rounded-full px-2 py-1 text-xs font-medium border-0 outline-none cursor-pointer ${CORES[status] ?? "bg-gray-100 text-gray-700"}`}
+      className={`rounded-full px-2 py-1 text-xs font-medium border-0 outline-none cursor-pointer ${CORES_STATUS_PROPOSTA[status] ?? "bg-gray-100 text-gray-700 dark:bg-gray-500/20 dark:text-gray-300"}`}
     >
       {Object.entries(labels).map(([value, label]) => (
         <option key={value} value={value}>

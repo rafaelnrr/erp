@@ -4,7 +4,7 @@ import { ThemeProvider } from "@/components/ThemeProvider";
 import { ThemeToggle } from "@/components/ThemeToggle";
 
 export const metadata: Metadata = {
-  title: "SolarFlow Pro",
+  title: "Hertz Solar",
   description: "Sistema interno de dimensionamento e propostas FV",
 };
 

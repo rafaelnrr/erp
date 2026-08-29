@@ -379,6 +379,81 @@ export async function atualizarStatusProposta(id: string, status: string) {
   return { success: true };
 }
 
+/** Duplica uma proposta (itens e serviços) como um novo rascunho, sem snapshot/valor congelados. */
+export async function duplicarProposta(propostaId: string) {
+  const supabase = await createClient();
+  const { data: authData } = await supabase.auth.getUser();
+  if (!authData.user) return { error: "Não autorizado" };
+
+  const completa = await listarPropostaCompleta(propostaId);
+  if (!completa) return { error: "Proposta não encontrada." };
+  const { proposta, itens, servicos } = completa;
+
+  const { data: nova, error: errInsert } = await supabase
+    .from("propostas")
+    .insert({
+      vendedor_id: authData.user.id,
+      cliente_id: proposta.cliente_id,
+      dimensionamento_id: proposta.dimensionamento_id,
+      titulo: proposta.titulo ? `${proposta.titulo} (cópia)` : null,
+      status: "rascunho",
+      condicoes_pagamento: proposta.condicoes_pagamento,
+      forma_pagamento: proposta.forma_pagamento,
+      parcelas: proposta.parcelas,
+      validade_dias: proposta.validade_dias,
+      prazo_instalacao_dias: proposta.prazo_instalacao_dias,
+      desconto_avista_pct: proposta.desconto_avista_pct,
+    })
+    .select("id")
+    .single();
+
+  if (errInsert || !nova) return { error: errInsert?.message ?? "Falha ao duplicar proposta." };
+
+  if (itens.length > 0) {
+    await supabase.from("proposta_itens").insert(
+      itens.map((i) => ({
+        proposta_id: nova.id,
+        produto_id: i.produto_id,
+        categoria: i.categoria,
+        descricao: i.descricao,
+        quantidade: i.quantidade,
+        preco_unitario: i.preco_unitario,
+        ordem: i.ordem,
+      }))
+    );
+  }
+
+  if (servicos.length > 0) {
+    await supabase.from("proposta_servicos").insert(
+      servicos.map((s) => ({
+        proposta_id: nova.id,
+        servico_id: s.servico_id,
+        nome: s.nome,
+        recorrencia: s.recorrencia,
+        preco: s.preco,
+        ordem: s.ordem,
+      }))
+    );
+  }
+
+  revalidatePath("/admin/propostas");
+  return { success: true as const, id: nova.id };
+}
+
+/** Exclui uma proposta em rascunho (a policy de RLS bloqueia qualquer outro status ou usuário sem permissão). */
+export async function excluirProposta(propostaId: string) {
+  const supabase = await createClient();
+  const { data, error } = await supabase.from("propostas").delete().eq("id", propostaId).select("id");
+
+  if (error) return { error: error.message };
+  if (!data || data.length === 0) {
+    return { error: "Não foi possível excluir: a proposta precisa estar em rascunho e você precisa ter permissão." };
+  }
+
+  revalidatePath("/admin/propostas");
+  return { success: true as const };
+}
+
 export async function buscarPropostaParaPdf(id: string) {
   const supabase = await createClient();
   const { data, error } = await supabase.from("propostas").select("numero, snapshot, criado_em").eq("id", id).single();

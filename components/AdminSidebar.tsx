@@ -19,7 +19,7 @@ export function AdminSidebar({ nav, role }: { nav: NavItem[]; role: string }) {
       <div className="mb-8 flex items-center justify-between px-2">
         <div className="flex items-center gap-2">
           <span className="text-amber-500 text-xl">☀</span>
-          <span className="text-[15px] font-bold text-white">SolarFlow Pro</span>
+          <span className="text-[15px] font-bold text-white">Hertz Solar</span>
         </div>
         <button onClick={toggleSidebar} className="lg:hidden text-slate-400 hover:text-white p-1">
           <svg className="w-6 h-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
@@ -60,7 +60,7 @@ export function AdminSidebar({ nav, role }: { nav: NavItem[]; role: string }) {
       <div className="lg:hidden flex items-center justify-between bg-slate-950 px-4 py-3 sticky top-0 z-40 border-b border-slate-800">
         <div className="flex items-center gap-2">
           <span className="text-amber-500 text-lg">☀</span>
-          <span className="text-sm font-bold text-white">SolarFlow Pro</span>
+          <span className="text-sm font-bold text-white">Hertz Solar</span>
         </div>
         <button onClick={toggleSidebar} className="text-slate-300 hover:text-white p-2 rounded-md hover:bg-slate-800 focus:outline-none focus:ring-2 focus:ring-amber-500">
           <svg className="w-6 h-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
