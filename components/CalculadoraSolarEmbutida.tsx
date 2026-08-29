@@ -4,9 +4,10 @@ import { useState } from "react";
 import {
   calcularDimensionamento,
   type DimensionamentoResultado,
-  type TipoLigacao,
 } from "@/app/actions/dimensionar";
 import { adicionarItensDoDimensionamento } from "@/app/actions/propostas";
+import { CamposEntrada, type ValoresDimensionamento } from "@/components/dimensionamento/CamposEntrada";
+import { ErrosBloqueantes, AvisosTecnicos } from "@/components/dimensionamento/AvisosErros";
 
 interface CalculadoraSolarEmbutidaProps {
   propostaId: string;
@@ -17,12 +18,14 @@ interface CalculadoraSolarEmbutidaProps {
 }
 
 export function CalculadoraSolarEmbutida({ propostaId, clienteId, consumoInicial, onFechar, onConcluir }: CalculadoraSolarEmbutidaProps) {
-  const [consumo, setConsumo] = useState(consumoInicial ?? 1600);
-  const [hsp, setHsp] = useState(5.2);
-  const [perdas, setPerdas] = useState(20);
-  const [compensacao, setCompensacao] = useState(100);
-  const [crescimento, setCrescimento] = useState(0);
-  const [tipoLigacao, setTipoLigacao] = useState<TipoLigacao>("monofasico");
+  const [valores, setValores] = useState<ValoresDimensionamento>({
+    consumo: consumoInicial ?? 1600,
+    hsp: 5.2,
+    perdas: 20,
+    compensacao: 100,
+    crescimento: 0,
+    tipoLigacao: "monofasico",
+  });
 
   const [loading, setLoading] = useState(false);
   const [erros, setErros] = useState<string[]>([]);
@@ -37,12 +40,12 @@ export function CalculadoraSolarEmbutida({ propostaId, clienteId, consumoInicial
     setDimensionamentoId(null);
     const res = await calcularDimensionamento({
       cliente_id: clienteId,
-      consumo_kwh_mes: consumo,
-      hsp,
-      perdas_pct: perdas,
-      compensacao_pct: compensacao,
-      crescimento_pct: crescimento,
-      tipo_ligacao: tipoLigacao,
+      consumo_kwh_mes: valores.consumo,
+      hsp: valores.hsp,
+      perdas_pct: valores.perdas,
+      compensacao_pct: valores.compensacao,
+      crescimento_pct: valores.crescimento,
+      tipo_ligacao: valores.tipoLigacao,
     });
     setLoading(false);
 
@@ -83,35 +86,8 @@ export function CalculadoraSolarEmbutida({ propostaId, clienteId, consumoInicial
           <button onClick={onFechar} className="text-[#94a3b8] hover:text-white">✕</button>
         </div>
 
-        <div className="grid grid-cols-2 gap-3 mb-4">
-          <div>
-            <label className="block text-[12px] text-[#cbd5e1] mb-1.5">Consumo (kWh/mês)</label>
-            <input type="number" value={consumo} onChange={(e) => setConsumo(Number(e.target.value))} />
-          </div>
-          <div>
-            <label className="block text-[12px] text-[#cbd5e1] mb-1.5">HSP (h/dia)</label>
-            <input type="number" step="0.1" value={hsp} onChange={(e) => setHsp(Number(e.target.value))} />
-          </div>
-          <div>
-            <label className="block text-[12px] text-[#cbd5e1] mb-1.5">Perdas (%)</label>
-            <input type="number" value={perdas} onChange={(e) => setPerdas(Number(e.target.value))} />
-          </div>
-          <div>
-            <label className="block text-[12px] text-[#cbd5e1] mb-1.5">Compensação (%)</label>
-            <input type="number" value={compensacao} onChange={(e) => setCompensacao(Number(e.target.value))} />
-          </div>
-          <div>
-            <label className="block text-[12px] text-[#cbd5e1] mb-1.5">Crescimento (%)</label>
-            <input type="number" value={crescimento} onChange={(e) => setCrescimento(Number(e.target.value))} />
-          </div>
-          <div>
-            <label className="block text-[12px] text-[#cbd5e1] mb-1.5">Tipo de Ligação</label>
-            <select value={tipoLigacao} onChange={(e) => setTipoLigacao(e.target.value as TipoLigacao)}>
-              <option value="monofasico">Monofásico</option>
-              <option value="bifasico">Bifásico</option>
-              <option value="trifasico">Trifásico</option>
-            </select>
-          </div>
+        <div className="mb-4">
+          <CamposEntrada valores={valores} onChange={(patch) => setValores((v) => ({ ...v, ...patch }))} />
         </div>
 
         <button
@@ -123,10 +99,8 @@ export function CalculadoraSolarEmbutida({ propostaId, clienteId, consumoInicial
         </button>
 
         {erros.length > 0 && (
-          <div className="mt-4 flex flex-col gap-2">
-            {erros.map((e, i) => (
-              <div key={i} className="p-3 rounded-lg text-[13px] bg-[rgba(239,68,68,0.12)] border border-[#ef4444] text-[#fca5a5]">🛑 {e}</div>
-            ))}
+          <div className="mt-4">
+            <ErrosBloqueantes erros={erros} />
           </div>
         )}
 
@@ -146,9 +120,9 @@ export function CalculadoraSolarEmbutida({ propostaId, clienteId, consumoInicial
               <p><b>{resultado.sugestao.qtde_modulos}x</b> {resultado.sugestao.modulo.fabricante} {resultado.sugestao.modulo.modelo}</p>
               <p className="mt-1"><b>{resultado.sugestao.qtde_inversores}x</b> {resultado.sugestao.inversor.fabricante} {resultado.sugestao.inversor.modelo}</p>
             </div>
-            {resultado.avisos.map((a, i) => (
-              <div key={i} className="mt-2 p-2.5 rounded-lg text-[12px] bg-[rgba(245,158,11,0.1)] border border-[#f59e0b] text-[#fcd34d]">⚠️ {a}</div>
-            ))}
+            <div className="mt-2 flex flex-col gap-2">
+              <AvisosTecnicos avisos={resultado.avisos} />
+            </div>
 
             <button
               onClick={handleConcluir}

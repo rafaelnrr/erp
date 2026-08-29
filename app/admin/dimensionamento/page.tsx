@@ -8,8 +8,9 @@ import {
   calcularDimensionamento,
   listarCatalogoParaDimensionamento,
   type DimensionamentoResultado,
-  type TipoLigacao,
 } from "@/app/actions/dimensionar";
+import { CamposEntrada, type ValoresDimensionamento } from "@/components/dimensionamento/CamposEntrada";
+import { ErrosBloqueantes, AvisosTecnicos } from "@/components/dimensionamento/AvisosErros";
 
 interface Cliente {
   id: string;
@@ -27,11 +28,14 @@ interface CatalogoOpcao {
 
 export default function DimensionamentoPage() {
   const router = useRouter();
-  const [consumo, setConsumo] = useState(1600);
-  const [hsp, setHsp] = useState(5.2);
-  const [perdas, setPerdas] = useState(20);
-  const [compensacao, setCompensacao] = useState(100);
-  const [crescimento, setCrescimento] = useState(0);
+  const [valores, setValores] = useState<ValoresDimensionamento>({
+    consumo: 1600,
+    hsp: 5.2,
+    perdas: 20,
+    compensacao: 100,
+    crescimento: 0,
+    tipoLigacao: "monofasico",
+  });
 
   const [clientes, setClientes] = useState<Cliente[]>([]);
   const [modulos, setModulos] = useState<CatalogoOpcao[]>([]);
@@ -40,7 +44,6 @@ export default function DimensionamentoPage() {
   const [clienteId, setClienteId] = useState("");
   const [moduloId, setModuloId] = useState("");
   const [inversorId, setInversorId] = useState("");
-  const [tipoLigacao, setTipoLigacao] = useState<TipoLigacao>("monofasico");
 
   const [loading, setLoading] = useState(false);
   const [erros, setErros] = useState<string[]>([]);
@@ -68,14 +71,14 @@ export default function DimensionamentoPage() {
     setDimensionamentoId(null);
     const res = await calcularDimensionamento({
       cliente_id: clienteId || undefined,
-      consumo_kwh_mes: consumo,
-      hsp,
-      perdas_pct: perdas,
-      compensacao_pct: compensacao,
-      crescimento_pct: crescimento,
+      consumo_kwh_mes: valores.consumo,
+      hsp: valores.hsp,
+      perdas_pct: valores.perdas,
+      compensacao_pct: valores.compensacao,
+      crescimento_pct: valores.crescimento,
       modulo_id: moduloId || undefined,
       inversor_id: inversorId || undefined,
-      tipo_ligacao: tipoLigacao,
+      tipo_ligacao: valores.tipoLigacao,
     });
     setLoading(false);
 
@@ -101,7 +104,7 @@ export default function DimensionamentoPage() {
   function handleClienteChange(id: string) {
     setClienteId(id);
     const c = clientes.find((cl) => cl.id === id);
-    if (c?.consumo_kwh_mes) setConsumo(c.consumo_kwh_mes);
+    if (c?.consumo_kwh_mes) setValores((v) => ({ ...v, consumo: c.consumo_kwh_mes! }));
   }
 
   return (
@@ -145,35 +148,9 @@ export default function DimensionamentoPage() {
               </select>
             </div>
 
-            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-              <div>
-                <label className="block text-[13px] text-[#cbd5e1] mb-2">Consumo médio (kWh/mês)</label>
-                <input type="number" value={consumo} onChange={(e) => setConsumo(Number(e.target.value))} min="1" />
-              </div>
-              <div>
-                <label className="block text-[13px] text-[#cbd5e1] mb-2">HSP média diária (h/dia)</label>
-                <input type="number" value={hsp} onChange={(e) => setHsp(Number(e.target.value))} min="0.1" step="0.1" />
-              </div>
-              <div>
-                <label className="block text-[13px] text-[#cbd5e1] mb-2">Perdas globais (%)</label>
-                <input type="number" value={perdas} onChange={(e) => setPerdas(Number(e.target.value))} min="0" max="90" />
-              </div>
-              <div>
-                <label className="block text-[13px] text-[#cbd5e1] mb-2">Compensação (%)</label>
-                <input type="number" value={compensacao} onChange={(e) => setCompensacao(Number(e.target.value))} min="1" max="150" />
-              </div>
-              <div>
-                <label className="block text-[13px] text-[#cbd5e1] mb-2">Crescimento carga (%)</label>
-                <input type="number" value={crescimento} onChange={(e) => setCrescimento(Number(e.target.value))} min="0" max="100" />
-              </div>
-              <div>
-                <label className="block text-[13px] text-[#cbd5e1] mb-2">Tipo de Ligação</label>
-                <select value={tipoLigacao} onChange={(e) => setTipoLigacao(e.target.value as TipoLigacao)}>
-                  <option value="monofasico">Monofásico</option>
-                  <option value="bifasico">Bifásico</option>
-                  <option value="trifasico">Trifásico</option>
-                </select>
-              </div>
+            <CamposEntrada valores={valores} onChange={(patch) => setValores((v) => ({ ...v, ...patch }))} />
+
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 mt-4">
               <div>
                 <label className="block text-[13px] text-[#cbd5e1] mb-2">Módulo (do catálogo)</label>
                 <select value={moduloId} onChange={(e) => setModuloId(e.target.value)}>
@@ -222,15 +199,7 @@ export default function DimensionamentoPage() {
           <section className="bg-[rgba(17,24,39,0.92)] border border-[#334155] rounded-[18px] p-6 shadow-[0_18px_50px_rgba(0,0,0,0.22)]">
             <h2 className="m-0 mb-4 text-[20px] font-semibold">Resultado do Dimensionamento</h2>
 
-            {erros.length > 0 && (
-              <div className="flex flex-col gap-2">
-                {erros.map((e, i) => (
-                  <div key={i} className="p-3 rounded-lg text-[13px] bg-[rgba(239,68,68,0.12)] border border-[#ef4444] text-[#fca5a5]">
-                    🛑 {e}
-                  </div>
-                ))}
-              </div>
-            )}
+            <ErrosBloqueantes erros={erros} />
 
             {!erros.length && !resultado && (
               <div className="mt-2 p-3.5 rounded-xl bg-[#172033] text-[#cbd5e1] text-[13px]">
@@ -281,11 +250,7 @@ export default function DimensionamentoPage() {
                   </div>
                 ) : (
                   <div className="mt-4 flex flex-col gap-2">
-                    {resultado.avisos.map((a, i) => (
-                      <div key={i} className="p-3 rounded-lg text-[13px] bg-[rgba(245,158,11,0.1)] border border-[#f59e0b] text-[#fcd34d]">
-                        ⚠️ {a}
-                      </div>
-                    ))}
+                    <AvisosTecnicos avisos={resultado.avisos} />
                   </div>
                 )}
 

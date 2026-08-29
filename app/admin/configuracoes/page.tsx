@@ -1,6 +1,7 @@
 import { listarUsuarios } from "@/app/actions/perfis";
 import { GerenciamentoUsuarios } from "@/components/GerenciamentoUsuarios";
 import { createClient } from "@/utils/supabase/server";
+import { ThemeToggle } from "@/components/ThemeToggle";
 
 export default async function ConfiguracoesPage() {
   const supabase = await createClient();
@@ -8,6 +9,9 @@ export default async function ConfiguracoesPage() {
 
   return (
     <main className="p-4 sm:p-6 lg:p-8">
+      <div className="mb-6 flex items-center justify-end">
+        <ThemeToggle />
+      </div>
       <GerenciamentoUsuarios usuarios={result.data} meuId={authData.data.user?.id ?? null} />
 
       <div className="mt-6 max-w-3xl text-xs text-slate-500 space-y-1">

@@ -4,6 +4,7 @@ import { criarProduto } from "@/app/actions/produtos";
 import { listarFabricantes, criarFabricante, type Fabricante } from "@/app/actions/fabricantes";
 import { useRouter } from "next/navigation";
 import { useEffect, useState } from "react";
+import { ThemeToggle } from "@/components/ThemeToggle";
 
 function NovoFabricanteModal({
   onCriado,
@@ -31,18 +32,18 @@ function NovoFabricanteModal({
 
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60">
-      <div className="w-full max-w-sm rounded-xl bg-white p-5 shadow-xl">
-        <h3 className="font-semibold text-gray-800 mb-3">Novo Fabricante</h3>
+      <div className="w-full max-w-sm panel p-5">
+        <h3 className="font-semibold text-slate-800 dark:text-slate-100 mb-3">Novo Fabricante</h3>
         <input
           autoFocus
           value={nome}
           onChange={(e) => setNome(e.target.value)}
           placeholder="Nome do fabricante"
-          className="w-full rounded border p-2 text-sm"
+          className="input-standard w-full"
         />
-        {erro && <p className="mt-1 text-xs text-red-600">{erro}</p>}
+        {erro && <p className="mt-1 text-xs text-red-600 dark:text-red-400">{erro}</p>}
         <div className="mt-4 flex justify-end gap-2">
-          <button onClick={onClose} className="px-3 py-1.5 text-sm text-gray-500">
+          <button onClick={onClose} className="px-3 py-1.5 text-sm text-slate-500 dark:text-slate-400">
             Cancelar
           </button>
           <button
@@ -86,29 +87,31 @@ export default function NovoProdutoPage() {
   }
 
   return (
-    <main className="p-8">
-      <div className="mb-6">
-        <h1 className="text-xl font-semibold">Novo Produto</h1>
+    <main className="p-4 sm:p-6 lg:p-8">
+      <div className="mb-6 flex items-center justify-between">
+        <h1 className="text-xl font-semibold text-slate-800 dark:text-slate-100">Novo Produto</h1>
+        <ThemeToggle />
       </div>
-      <form onSubmit={handleSubmit} className="flex max-w-lg flex-col gap-4 rounded-lg border bg-white p-6 shadow-sm">
-        <input name="sku" placeholder="SKU Único (ex: MOD-550W-DAH)" required className="rounded border p-2 text-sm" />
-        <select name="categoria" required className="rounded border p-2 text-sm">
+      <form onSubmit={handleSubmit} className="flex max-w-lg flex-col gap-4 panel p-6">
+        <input name="sku" placeholder="SKU Único (ex: MOD-550W-DAH)" required className="input-standard" />
+        <select name="categoria" required className="input-standard">
           <option value="">Selecione a Categoria</option>
           <option value="modulo">Módulo</option>
           <option value="inversor">Inversor</option>
           <option value="estrutura">Estrutura</option>
           <option value="string_box">String Box</option>
           <option value="cabo">Cabo</option>
+          <option value="acessorio">Acessório</option>
         </select>
 
         <div className="flex items-end gap-2">
           <div className="flex-1">
-            <label className="mb-1 block text-xs text-gray-500">Fabricante</label>
+            <label className="mb-1 block text-xs text-slate-500 dark:text-slate-400">Fabricante</label>
             <select
               value={fabricanteId}
               onChange={(e) => setFabricanteId(e.target.value)}
               required
-              className="w-full rounded border p-2 text-sm"
+              className="input-standard w-full"
             >
               <option value="">Selecione...</option>
               {fabricantes.map((f) => (
@@ -121,14 +124,14 @@ export default function NovoProdutoPage() {
           <button
             type="button"
             onClick={() => setModalAberto(true)}
-            className="rounded border p-2 text-sm text-blue-600 hover:bg-blue-50"
+            className="input-standard text-amber-600 dark:text-amber-500 hover:bg-amber-50 dark:hover:bg-amber-500/10"
           >
             [+] Novo Fabricante
           </button>
         </div>
 
-        <input name="modelo" placeholder="Modelo" required className="rounded border p-2 text-sm" />
-        <input name="potencia_w" type="number" placeholder="Potência (Wp) - Apenas Módulo/Inversor" className="rounded border p-2 text-sm" />
+        <input name="modelo" placeholder="Modelo" required className="input-standard" />
+        <input name="potencia_w" type="number" placeholder="Potência (Wp) - Apenas Módulo/Inversor" className="input-standard" />
         <button type="submit" disabled={loading} className="btn-primary">
           {loading ? "Salvando..." : "Salvar Produto no Catálogo"}
         </button>
