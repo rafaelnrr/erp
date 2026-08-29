@@ -15,6 +15,13 @@ const ALIASES: Record<string, string[]> = {
   cd: ["cd", "cdorigem", "centrodedistribuicao", "origem", "deposito"],
   preco: ["preco", "precorbrasil", "precor", "valor"],
   quantidade: ["quantidade", "qtd", "qtde", "estoque"],
+  nome: ["nome", "servico", "nomedofabricante", "nomedoservico"],
+  recorrencia: ["recorrencia", "recorrenciapadrao", "periodicidade"],
+  tempovalor: ["tempoexecucao", "tempoexecucaovalor", "tempo", "duracao"],
+  tempounidade: ["tempoexecucaounidade", "unidadetempo", "unidade"],
+  custointerno: ["custointerno", "custo"],
+  precovenda: ["precovenda", "precopadrao", "precodevenda"],
+  ativo: ["ativo", "status"],
 };
 
 /** Mapeia cabeçalhos de uma planilha (em qualquer ordem/grafia) para as chaves canônicas conhecidas. */
@@ -56,4 +63,29 @@ const ALIASES_CATEGORIA: Record<string, (typeof CATEGORIAS_VALIDAS)[number]> = {
 export function normalizarCategoria(valor: string): (typeof CATEGORIAS_VALIDAS)[number] | null {
   const chave = normalizar(valor);
   return ALIASES_CATEGORIA[chave] ?? null;
+}
+
+export const RECORRENCIAS_VALIDAS = ["unico", "mensal", "anual"] as const;
+
+const ALIASES_RECORRENCIA: Record<string, (typeof RECORRENCIAS_VALIDAS)[number]> = {
+  unico: "unico",
+  unica: "unico",
+  avulso: "unico",
+  mensal: "mensal",
+  mes: "mensal",
+  anual: "anual",
+  ano: "anual",
+};
+
+export function normalizarRecorrencia(valor: string): (typeof RECORRENCIAS_VALIDAS)[number] | null {
+  const chave = normalizar(valor);
+  return ALIASES_RECORRENCIA[chave] ?? null;
+}
+
+export function normalizarBooleano(valor: string, padrao = true): boolean {
+  const chave = normalizar(valor);
+  if (!chave) return padrao;
+  if (["sim", "s", "ativo", "true", "1", "yes"].includes(chave)) return true;
+  if (["nao", "n", "inativo", "false", "0", "no"].includes(chave)) return false;
+  return padrao;
 }

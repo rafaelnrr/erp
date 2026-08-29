@@ -3,7 +3,6 @@ import { listarProdutos, type Produto } from "@/app/actions/produtos";
 import { obterMeuPapel } from "@/app/actions/perfis";
 import { ThemeToggle } from "@/components/ThemeToggle";
 import { ExcluirProdutoButton } from "@/components/ExcluirProdutoButton";
-import { ImportarProdutosModal } from "@/components/ImportarProdutosModal";
 
 const LABEL_CATEGORIA: Record<Produto["categoria"], string> = {
   modulo: "Módulo",
@@ -37,7 +36,14 @@ export default async function CatalogoPage() {
         </div>
         <div className="flex items-center gap-3">
           <ThemeToggle />
-          {isAdmin && <ImportarProdutosModal />}
+          {isAdmin && (
+            <Link
+              href="/admin/importar"
+              className="btn-primary bg-slate-700 hover:bg-slate-800 dark:bg-slate-700 dark:hover:bg-slate-600 text-white"
+            >
+              Importação em Massa
+            </Link>
+          )}
           <Link href="/admin/produtos/novo" className="btn-primary">
             + Novo Produto
           </Link>

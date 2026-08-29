@@ -11,13 +11,29 @@ export interface PerfilUsuario {
   nome: string | null;
   email: string | null;
   role: Role;
+  ativo: boolean;
 }
 
 export async function listarUsuarios() {
   const supabase = await createClient();
   const { data, error } = await supabase.from("perfis").select("id, nome, email, role").order("email", { ascending: true });
 
-  return { ok: !error, data: (data as PerfilUsuario[]) || [], error: error?.message };
+  if (error || !data) return { ok: false, data: [] as PerfilUsuario[], error: error?.message };
+
+  const admin = clienteAdmin();
+  let banidos = new Set<string>();
+  if (admin) {
+    // pagina até 1000 usuários (suficiente para o tamanho de equipe deste ERP); status é best-effort
+    const { data: listaAuth } = await admin.auth.admin.listUsers({ perPage: 1000 });
+    banidos = new Set(
+      (listaAuth?.users ?? [])
+        .filter((u) => u.banned_until && new Date(u.banned_until) > new Date())
+        .map((u) => u.id)
+    );
+  }
+
+  const usuarios: PerfilUsuario[] = data.map((u) => ({ ...(u as Omit<PerfilUsuario, "ativo">), ativo: !banidos.has(u.id) }));
+  return { ok: true, data: usuarios, error: undefined };
 }
 
 export async function atualizarRoleUsuario(id: string, role: Role) {
@@ -96,6 +112,27 @@ export async function excluirUsuario(id: string) {
   if (errPerfil) return { error: errPerfil.message };
 
   const { error } = await admin.auth.admin.deleteUser(id);
+  if (error) return { error: error.message };
+
+  revalidatePath("/admin/configuracoes");
+  return { success: true as const };
+}
+
+/** Ativa/desativa o login do usuário sem excluir a conta. Requer SUPABASE_SERVICE_ROLE_KEY. */
+export async function alternarStatusUsuario(id: string, ativar: boolean) {
+  const meuPapel = await obterMeuPapel();
+  if (meuPapel !== "admin") return { error: "Apenas administradores podem ativar/desativar usuários." };
+
+  const supabase = await createClient();
+  const { data: authData } = await supabase.auth.getUser();
+  if (authData.user?.id === id) return { error: "Você não pode desativar sua própria conta." };
+
+  const admin = clienteAdmin();
+  if (!admin) return { error: ERRO_SEM_SERVICE_ROLE };
+
+  const { error } = await admin.auth.admin.updateUserById(id, {
+    ban_duration: ativar ? "none" : "876000h",
+  });
   if (error) return { error: error.message };
 
   revalidatePath("/admin/configuracoes");

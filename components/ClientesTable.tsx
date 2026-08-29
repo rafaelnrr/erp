@@ -7,7 +7,17 @@ import type { Tables } from "@/types/supabase";
 
 const ITENS_POR_PAGINA = 15;
 
-export function ClientesTable({ clientes, podeEditar }: { clientes: Tables<"clientes">[]; podeEditar: boolean }) {
+export function ClientesTable({
+  clientes,
+  isAdmin,
+  isEditor,
+  meuId,
+}: {
+  clientes: Tables<"clientes">[];
+  isAdmin: boolean;
+  isEditor: boolean;
+  meuId: string | null;
+}) {
   const [busca, setBusca] = useState("");
   const [pagina, setPagina] = useState(1);
 
@@ -25,6 +35,7 @@ export function ClientesTable({ clientes, podeEditar }: { clientes: Tables<"clie
   const totalPaginas = Math.max(1, Math.ceil(filtrados.length / ITENS_POR_PAGINA));
   const paginaAtual = Math.min(pagina, totalPaginas);
   const itensPagina = filtrados.slice((paginaAtual - 1) * ITENS_POR_PAGINA, paginaAtual * ITENS_POR_PAGINA);
+  const mostrarColunaAcoes = isAdmin || isEditor;
 
   return (
     <>
@@ -49,34 +60,40 @@ export function ClientesTable({ clientes, podeEditar }: { clientes: Tables<"clie
               <th>Consumo (kWh)</th>
               <th>Cidade/UF</th>
               <th>Zona</th>
-              {podeEditar && <th className="text-right">Ações</th>}
+              {mostrarColunaAcoes && <th className="text-right">Ações</th>}
             </tr>
           </thead>
           <tbody>
             {itensPagina.length === 0 ? (
               <tr>
-                <td colSpan={podeEditar ? 6 : 5} className="px-4 py-8 text-center text-slate-500 dark:text-slate-400">
+                <td colSpan={mostrarColunaAcoes ? 6 : 5} className="px-4 py-8 text-center text-slate-500 dark:text-slate-400">
                   {clientes.length === 0 ? "Nenhum cliente cadastrado." : "Nenhum cliente encontrado para essa busca."}
                 </td>
               </tr>
             ) : (
-              itensPagina.map((c) => (
-                <tr key={c.id}>
-                  <td className="font-medium text-slate-800 dark:text-slate-200">{c.nome}</td>
-                  <td>{c.documento || "—"}</td>
-                  <td>{c.consumo_kwh_mes ?? "—"}</td>
-                  <td>{c.cidade ? `${c.cidade}/${c.uf ?? "—"}` : "—"}</td>
-                  <td className="capitalize">{c.zona ?? "—"}</td>
-                  {podeEditar && (
-                    <td>
-                      <div className="flex items-center justify-end gap-1">
-                        <NovoClienteDrawer cliente={c} />
-                        <ExcluirClienteButton id={c.id} nome={c.nome} />
-                      </div>
-                    </td>
-                  )}
-                </tr>
-              ))
+              itensPagina.map((c) => {
+                const dono = meuId != null && c.vendedor_id === meuId;
+                const podeEditar = isAdmin || (isEditor && dono);
+                return (
+                  <tr key={c.id}>
+                    <td className="font-medium text-slate-800 dark:text-slate-200">{c.nome}</td>
+                    <td>{c.documento || "—"}</td>
+                    <td>{c.consumo_kwh_mes ?? "—"}</td>
+                    <td>{c.cidade ? `${c.cidade}/${c.uf ?? "—"}` : "—"}</td>
+                    <td className="capitalize">{c.zona ?? "—"}</td>
+                    {mostrarColunaAcoes && (
+                      <td>
+                        {podeEditar && (
+                          <div className="flex items-center justify-end gap-1">
+                            <NovoClienteDrawer cliente={c} />
+                            <ExcluirClienteButton id={c.id} nome={c.nome} />
+                          </div>
+                        )}
+                      </td>
+                    )}
+                  </tr>
+                );
+              })
             )}
           </tbody>
         </table>

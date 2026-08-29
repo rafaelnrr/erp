@@ -13,10 +13,21 @@ interface PropostaLinha {
   status: string;
   valor_total: number | null;
   criado_em: string;
+  vendedor_id: string | null;
   clientes: { nome: string } | null;
 }
 
-export function PropostasTable({ propostas, podeEditar }: { propostas: PropostaLinha[]; podeEditar: boolean }) {
+export function PropostasTable({
+  propostas,
+  isAdmin,
+  isEditor,
+  meuId,
+}: {
+  propostas: PropostaLinha[];
+  isAdmin: boolean;
+  isEditor: boolean;
+  meuId: string | null;
+}) {
   const [busca, setBusca] = useState("");
   const [statusFiltro, setStatusFiltro] = useState("todos");
   const [pagina, setPagina] = useState(1);
@@ -86,26 +97,30 @@ export function PropostasTable({ propostas, podeEditar }: { propostas: PropostaL
                 </td>
               </tr>
             ) : (
-              itensPagina.map((p) => (
-                <tr key={p.id}>
-                  <td className="font-mono text-xs">#{p.numero}</td>
-                  <td className="font-medium text-slate-800 dark:text-slate-200">{p.clientes?.nome ?? "—"}</td>
-                  <td>{p.status === "rascunho" ? "—" : Number(p.valor_total ?? 0).toLocaleString("pt-BR", { style: "currency", currency: "BRL" })}</td>
-                  <td>
-                    {p.status === "rascunho" || !podeEditar ? (
-                      <span className="rounded-full bg-slate-100 dark:bg-slate-700/50 px-2 py-1 text-xs font-medium text-slate-600 dark:text-slate-300">
-                        {p.status === "rascunho" ? "Rascunho" : LABEL_STATUS_PROPOSTA[p.status] ?? p.status}
-                      </span>
-                    ) : (
-                      <StatusPropostaSelect id={p.id} statusAtual={p.status} labels={LABEL_STATUS_PROPOSTA} />
-                    )}
-                  </td>
-                  <td className="text-xs text-slate-500 dark:text-slate-400">{new Date(p.criado_em).toLocaleDateString("pt-BR")}</td>
-                  <td>
-                    <PropostaActions id={p.id} status={p.status} podeEditar={podeEditar} />
-                  </td>
-                </tr>
-              ))
+              itensPagina.map((p) => {
+                const dono = meuId != null && p.vendedor_id === meuId;
+                const podeEditar = isAdmin || (isEditor && dono);
+                return (
+                  <tr key={p.id}>
+                    <td className="font-mono text-xs">#{p.numero}</td>
+                    <td className="font-medium text-slate-800 dark:text-slate-200">{p.clientes?.nome ?? "—"}</td>
+                    <td>{p.status === "rascunho" ? "—" : Number(p.valor_total ?? 0).toLocaleString("pt-BR", { style: "currency", currency: "BRL" })}</td>
+                    <td>
+                      {p.status === "rascunho" || !podeEditar ? (
+                        <span className="rounded-full bg-slate-100 dark:bg-slate-700/50 px-2 py-1 text-xs font-medium text-slate-600 dark:text-slate-300">
+                          {p.status === "rascunho" ? "Rascunho" : LABEL_STATUS_PROPOSTA[p.status] ?? p.status}
+                        </span>
+                      ) : (
+                        <StatusPropostaSelect id={p.id} statusAtual={p.status} labels={LABEL_STATUS_PROPOSTA} />
+                      )}
+                    </td>
+                    <td className="text-xs text-slate-500 dark:text-slate-400">{new Date(p.criado_em).toLocaleDateString("pt-BR")}</td>
+                    <td>
+                      <PropostaActions id={p.id} status={p.status} podeEditar={podeEditar} />
+                    </td>
+                  </tr>
+                );
+              })
             )}
           </tbody>
         </table>

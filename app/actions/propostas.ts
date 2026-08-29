@@ -395,7 +395,7 @@ export async function listarPropostas() {
   const supabase = await createClient();
   const { data, error } = await supabase
     .from("propostas")
-    .select("id, numero, status, valor_total, criado_em, clientes(nome)")
+    .select("id, numero, status, valor_total, criado_em, vendedor_id, clientes(nome)")
     .order("criado_em", { ascending: false });
 
   return { ok: !error, data: (data as any[]) || [], error: error?.message };

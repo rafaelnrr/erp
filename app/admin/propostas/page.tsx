@@ -1,13 +1,22 @@
 import Link from "next/link";
 import { listarPropostas } from "@/app/actions/propostas";
 import { obterMeuPapel } from "@/app/actions/perfis";
+import { createClient } from "@/utils/supabase/server";
 import { ThemeToggle } from "@/components/ThemeToggle";
 import { PropostasTable } from "@/components/PropostasTable";
 
 export default async function PropostasPage() {
-  const [result, role] = await Promise.all([listarPropostas(), obterMeuPapel()]);
+  const supabase = await createClient();
+  const [result, role, { data: authData }] = await Promise.all([
+    listarPropostas(),
+    obterMeuPapel(),
+    supabase.auth.getUser(),
+  ]);
   const propostas = result.data;
-  const podeEditar = role === "admin" || role === "editor";
+  const isAdmin = role === "admin";
+  const isEditor = role === "editor";
+  const meuId = authData.user?.id ?? null;
+  const podeCriar = isAdmin || isEditor;
 
   return (
     <main className="p-4 sm:p-6 lg:p-8">
@@ -20,7 +29,7 @@ export default async function PropostasPage() {
         </div>
         <div className="flex items-center gap-4">
           <ThemeToggle />
-          {podeEditar && (
+          {podeCriar && (
             <Link href="/admin/propostas/novo" className="btn-primary">
               + Nova Proposta
             </Link>
@@ -28,7 +37,7 @@ export default async function PropostasPage() {
         </div>
       </div>
 
-      <PropostasTable propostas={propostas} podeEditar={podeEditar} />
+      <PropostasTable propostas={propostas} isAdmin={isAdmin} isEditor={isEditor} meuId={meuId} />
     </main>
   );
 }
