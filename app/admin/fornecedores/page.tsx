@@ -7,6 +7,7 @@ export default async function FornecedoresPage() {
   const [result, role] = await Promise.all([listarFornecedores(), obterMeuPapel()]);
   const fornecedores = result.ok ? result.data : [];
   const isAdmin = role === "admin";
+  const isEditor = role === "editor";
 
   return (
     <main className="p-4 sm:p-6 lg:p-8">
@@ -20,7 +21,7 @@ export default async function FornecedoresPage() {
 
       {!result.ok && <p className="mb-4 text-red-600 dark:text-red-400">{result.error}</p>}
 
-      <FornecedoresTable fornecedores={fornecedores} podeAdicionar={isAdmin} podeEditar={isAdmin} />
+      <FornecedoresTable fornecedores={fornecedores} podeAdicionar={isAdmin || isEditor} podeEditar={isAdmin} />
     </main>
   );
 }

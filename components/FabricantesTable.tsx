@@ -4,7 +4,7 @@ import { useState, useTransition } from "react";
 import { useRouter } from "next/navigation";
 import { criarFabricante, atualizarFabricante, excluirFabricante, type Fabricante } from "@/app/actions/fabricantes";
 
-function LinhaFabricante({ fabricante, isAdmin }: { fabricante: Fabricante; isAdmin: boolean }) {
+function LinhaFabricante({ fabricante, podeEditar }: { fabricante: Fabricante; podeEditar: boolean }) {
   const [editando, setEditando] = useState(false);
   const [nome, setNome] = useState(fabricante.nome);
   const [erro, setErro] = useState<string | null>(null);
@@ -50,7 +50,7 @@ function LinhaFabricante({ fabricante, isAdmin }: { fabricante: Fabricante; isAd
         )}
         {erro && <p className="mt-1 text-xs text-red-600 dark:text-red-400">{erro}</p>}
       </td>
-      {isAdmin && (
+      {podeEditar && (
         <td>
           <div className="flex items-center justify-end gap-3 text-xs font-medium">
             {editando ? (
@@ -85,7 +85,15 @@ function LinhaFabricante({ fabricante, isAdmin }: { fabricante: Fabricante; isAd
   );
 }
 
-export function FabricantesTable({ fabricantes, isAdmin }: { fabricantes: Fabricante[]; isAdmin: boolean }) {
+export function FabricantesTable({
+  fabricantes,
+  podeAdicionar,
+  podeEditar,
+}: {
+  fabricantes: Fabricante[];
+  podeAdicionar: boolean;
+  podeEditar: boolean;
+}) {
   const [novoNome, setNovoNome] = useState("");
   const [salvando, setSalvando] = useState(false);
   const [erro, setErro] = useState<string | null>(null);
@@ -106,9 +114,11 @@ export function FabricantesTable({ fabricantes, isAdmin }: { fabricantes: Fabric
     router.refresh();
   }
 
+  const mostrarColunaAcoes = podeEditar;
+
   return (
     <>
-      {isAdmin && (
+      {podeAdicionar && (
         <form onSubmit={adicionar} className="mb-4 flex items-end gap-2">
           <div>
             <label className="mb-1 block text-xs text-slate-500 dark:text-slate-400">Novo fabricante</label>
@@ -126,18 +136,18 @@ export function FabricantesTable({ fabricantes, isAdmin }: { fabricantes: Fabric
           <thead>
             <tr>
               <th>Nome</th>
-              {isAdmin && <th className="text-right">Ações</th>}
+              {mostrarColunaAcoes && <th className="text-right">Ações</th>}
             </tr>
           </thead>
           <tbody>
             {fabricantes.length === 0 ? (
               <tr>
-                <td colSpan={isAdmin ? 2 : 1} className="px-4 py-8 text-center text-slate-500 dark:text-slate-400">
+                <td colSpan={mostrarColunaAcoes ? 2 : 1} className="px-4 py-8 text-center text-slate-500 dark:text-slate-400">
                   Nenhum fabricante cadastrado.
                 </td>
               </tr>
             ) : (
-              fabricantes.map((f) => <LinhaFabricante key={f.id} fabricante={f} isAdmin={isAdmin} />)
+              fabricantes.map((f) => <LinhaFabricante key={f.id} fabricante={f} podeEditar={podeEditar} />)
             )}
           </tbody>
         </table>

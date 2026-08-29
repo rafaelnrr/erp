@@ -22,7 +22,8 @@ export default async function EstoquePage() {
       <EstoqueTable
         linhas={estoqueRes.data}
         produtos={produtosRes.ok ? produtosRes.data : []}
-        isAdmin={role === "admin"}
+        podeAdicionar={role === "admin" || role === "editor"}
+        podeEditar={role === "admin"}
       />
     </main>
   );

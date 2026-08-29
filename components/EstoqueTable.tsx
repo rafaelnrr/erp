@@ -15,7 +15,7 @@ function descricaoProduto(p: EstoquePrecoLinha["produtos"]) {
   return `${p.fabricantes?.nome ?? ""} ${attrs.modelo ?? p.sku}`.trim();
 }
 
-function LinhaEstoque({ linha, isAdmin }: { linha: EstoquePrecoLinha; isAdmin: boolean }) {
+function LinhaEstoque({ linha, podeEditar }: { linha: EstoquePrecoLinha; podeEditar: boolean }) {
   const [editando, setEditando] = useState(false);
   const [preco, setPreco] = useState(String(linha.preco));
   const [quantidade, setQuantidade] = useState(String(linha.quantidade));
@@ -65,7 +65,7 @@ function LinhaEstoque({ linha, isAdmin }: { linha: EstoquePrecoLinha; isAdmin: b
           linha.quantidade
         )}
       </td>
-      {isAdmin && (
+      {podeEditar && (
         <td>
           <div className="flex items-center justify-end gap-3 text-xs font-medium">
             {editando ? (
@@ -165,7 +165,17 @@ function NovoRegistroForm({ produtos }: { produtos: Produto[] }) {
   );
 }
 
-export function EstoqueTable({ linhas, produtos, isAdmin }: { linhas: EstoquePrecoLinha[]; produtos: Produto[]; isAdmin: boolean }) {
+export function EstoqueTable({
+  linhas,
+  produtos,
+  podeAdicionar,
+  podeEditar,
+}: {
+  linhas: EstoquePrecoLinha[];
+  produtos: Produto[];
+  podeAdicionar: boolean;
+  podeEditar: boolean;
+}) {
   const [busca, setBusca] = useState("");
 
   const filtradas = useMemo(() => {
@@ -174,9 +184,11 @@ export function EstoqueTable({ linhas, produtos, isAdmin }: { linhas: EstoquePre
     return linhas.filter((l) => descricaoProduto(l.produtos).toLowerCase().includes(termo) || l.cd_id.toLowerCase().includes(termo) || (l.produtos?.sku ?? "").toLowerCase().includes(termo));
   }, [linhas, busca]);
 
+  const mostrarColunaAcoes = podeEditar;
+
   return (
     <>
-      {isAdmin && <NovoRegistroForm produtos={produtos} />}
+      {podeAdicionar && <NovoRegistroForm produtos={produtos} />}
 
       <div className="mb-4">
         <input
@@ -196,18 +208,18 @@ export function EstoqueTable({ linhas, produtos, isAdmin }: { linhas: EstoquePre
               <th>CD / Origem</th>
               <th>Preço</th>
               <th>Quantidade</th>
-              {isAdmin && <th className="text-right">Ações</th>}
+              {mostrarColunaAcoes && <th className="text-right">Ações</th>}
             </tr>
           </thead>
           <tbody>
             {filtradas.length === 0 ? (
               <tr>
-                <td colSpan={isAdmin ? 6 : 5} className="px-4 py-8 text-center text-slate-500 dark:text-slate-400">
+                <td colSpan={mostrarColunaAcoes ? 6 : 5} className="px-4 py-8 text-center text-slate-500 dark:text-slate-400">
                   {linhas.length === 0 ? "Nenhum registro de estoque/preço cadastrado." : "Nenhum registro encontrado para essa busca."}
                 </td>
               </tr>
             ) : (
-              filtradas.map((l) => <LinhaEstoque key={l.id} linha={l} isAdmin={isAdmin} />)
+              filtradas.map((l) => <LinhaEstoque key={l.id} linha={l} podeEditar={podeEditar} />)
             )}
           </tbody>
         </table>

@@ -6,6 +6,8 @@ import { ThemeToggle } from "@/components/ThemeToggle";
 export default async function FabricantesPage() {
   const [result, role] = await Promise.all([listarFabricantes(), obterMeuPapel()]);
   const fabricantes = result.ok ? result.data : [];
+  const isAdmin = role === "admin";
+  const isEditor = role === "editor";
 
   return (
     <main className="p-4 sm:p-6 lg:p-8">
@@ -19,7 +21,7 @@ export default async function FabricantesPage() {
 
       {!result.ok && <p className="mb-4 text-red-600 dark:text-red-400">{result.error}</p>}
 
-      <FabricantesTable fabricantes={fabricantes} isAdmin={role === "admin"} />
+      <FabricantesTable fabricantes={fabricantes} podeAdicionar={isAdmin || isEditor} podeEditar={isAdmin} />
     </main>
   );
 }
