@@ -7,7 +7,7 @@ export default async function ClientesPage() {
   const clientes = result.data as any[];
 
   return (
-    <main className="p-8">
+    <main className="p-4 sm:p-6 lg:p-8">
       <div className="mb-6 flex items-center justify-between">
         <h1 className="text-2xl font-semibold text-slate-800 dark:text-slate-100">Gestão de Clientes</h1>
         <div className="flex items-center gap-4">

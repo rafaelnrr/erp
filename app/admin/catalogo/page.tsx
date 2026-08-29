@@ -16,7 +16,7 @@ export default async function CatalogoPage() {
 
   if (!result.ok) {
     return (
-      <main className="p-8">
+      <main className="p-4 sm:p-6 lg:p-8">
         <p className="text-red-600">{result.error}</p>
       </main>
     );
@@ -25,7 +25,7 @@ export default async function CatalogoPage() {
   const produtos = result.data;
 
   return (
-    <main className="p-8">
+    <main className="p-4 sm:p-6 lg:p-8">
       <div className="mb-6 flex items-center justify-between">
         <div>
           <h1 className="text-xl font-semibold">Catálogo de Produtos</h1>

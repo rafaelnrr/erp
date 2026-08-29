@@ -7,7 +7,7 @@ export default async function ConfiguracoesPage() {
   const [result, authData] = await Promise.all([listarUsuarios(), supabase.auth.getUser()]);
 
   return (
-    <main className="p-8">
+    <main className="p-4 sm:p-6 lg:p-8">
       <GerenciamentoUsuarios usuarios={result.data} meuId={authData.data.user?.id ?? null} />
 
       <div className="mt-6 max-w-3xl text-xs text-slate-500 space-y-1">

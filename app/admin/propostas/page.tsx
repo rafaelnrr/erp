@@ -3,6 +3,7 @@ import { listarPropostas } from "@/app/actions/propostas";
 import { StatusPropostaSelect } from "@/components/StatusPropostaSelect";
 import { obterMeuPapel } from "@/app/actions/perfis";
 import { ThemeToggle } from "@/components/ThemeToggle";
+import { PropostaActions } from "@/components/PropostaActions";
 
 const LABEL_STATUS: Record<string, string> = {
   gerada: "Gerada",
@@ -18,7 +19,7 @@ export default async function PropostasPage() {
   const podeEditar = role === "admin" || role === "editor";
 
   return (
-    <main className="p-8">
+    <main className="p-4 sm:p-6 lg:p-8">
       <div className="mb-6 flex items-center justify-between">
         <div>
           <h1 className="text-2xl font-semibold text-slate-800 dark:text-slate-100">Orçamentos e Propostas</h1>
@@ -39,8 +40,8 @@ export default async function PropostasPage() {
         </div>
       </div>
 
-      <div className="overflow-hidden rounded-lg border bg-white shadow-sm">
-        <table className="min-w-full divide-y divide-gray-200 text-sm">
+      <div className="overflow-x-auto rounded-lg border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 shadow-sm">
+        <table className="table-standard">
           <thead className="bg-gray-50">
             <tr>
               <th className="px-4 py-3 text-left font-medium text-gray-600">Nº</th>
@@ -77,20 +78,7 @@ export default async function PropostasPage() {
                   </td>
                   <td className="px-4 py-3 text-gray-500 text-xs">{new Date(p.criado_em).toLocaleDateString("pt-BR")}</td>
                   <td className="px-4 py-3">
-                    {p.status === "rascunho" ? (
-                      <Link href={`/admin/propostas/${p.id}/construtor`} className="text-blue-600 hover:underline text-xs font-medium">
-                        {podeEditar ? "Continuar edição" : "Ver detalhes"}
-                      </Link>
-                    ) : (
-                      <a
-                        href={`/api/propostas/${p.id}/pdf`}
-                        target="_blank"
-                        rel="noopener noreferrer"
-                        className="text-blue-600 hover:underline text-xs font-medium"
-                      >
-                        Abrir PDF
-                      </a>
-                    )}
+                    <PropostaActions id={p.id} status={p.status} podeEditar={podeEditar} />
                   </td>
                 </tr>
               ))
