@@ -2,6 +2,7 @@
 
 import { createClient } from "@/utils/supabase/server";
 import { revalidatePath } from "next/cache";
+import type { Json } from "@/types/supabase";
 
 export interface SnapshotItem {
   categoria: string;
@@ -295,7 +296,9 @@ export async function finalizarProposta(propostaId: string) {
   // projeção de 30 anos com reajuste anual de 4% sobre a economia (série geométrica)
   const economiaTotal30Anos = economiaAno1 ? economiaAno1 * ((Math.pow(1.04, 30) - 1) / 0.04) : null;
 
-  const { data: perfilVendedor } = await supabase.from("perfis").select("nome").eq("id", proposta.vendedor_id).single();
+  const { data: perfilVendedor } = proposta.vendedor_id
+    ? await supabase.from("perfis").select("nome").eq("id", proposta.vendedor_id).single()
+    : { data: null };
 
   const snapshot: ProposalSnapshot = {
     titulo: proposta.titulo ?? null,
@@ -343,7 +346,7 @@ export async function finalizarProposta(propostaId: string) {
   const { error: errUpdate } = await supabase
     .from("propostas")
     .update({
-      snapshot,
+      snapshot: snapshot as unknown as Json,
       status: "gerada",
       valor_total: valorTotal,
       economia_estimada_ano1: economiaAno1,
@@ -458,5 +461,5 @@ export async function buscarPropostaParaPdf(id: string) {
   const supabase = await createClient();
   const { data, error } = await supabase.from("propostas").select("numero, snapshot, criado_em").eq("id", id).single();
   if (error || !data || !data.snapshot) return null;
-  return data as { numero: number; snapshot: ProposalSnapshot; criado_em: string };
+  return { ...data, snapshot: data.snapshot as unknown as ProposalSnapshot };
 }

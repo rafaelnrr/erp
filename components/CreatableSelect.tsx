@@ -71,7 +71,7 @@ export function CreatableSelect({ label, value, onChange, options, placeholder }
                 onClick={() => selecionar(query.trim())}
                 className="w-full text-left px-3 py-2 text-[14px] text-[#86efac] hover:bg-[#1e293b] border-t border-[#334155]"
               >
-                + Criar "{query.trim()}"
+                + Criar &quot;{query.trim()}&quot;
               </button>
             </li>
           )}

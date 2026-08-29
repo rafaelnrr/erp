@@ -53,7 +53,7 @@ function formatBRL(n: number) {
   return n.toLocaleString("pt-BR", { style: "currency", currency: "BRL" });
 }
 
-function PropostaPdf({ numero, snapshot, criadoEm }: { numero: number; snapshot: any; criadoEm: string }) {
+function PropostaPdf({ numero, snapshot, criadoEm }: { numero: number; snapshot: any; criadoEm: string | null }) {
   const dim = snapshot.dimensionamento;
   const itens = snapshot.itens ?? [];
   const servicos = snapshot.servicos ?? [];
@@ -62,7 +62,7 @@ function PropostaPdf({ numero, snapshot, criadoEm }: { numero: number; snapshot:
     ...servicos.map((s: any) => ({ descricao: s.nome, und: "serv", qtd: 1 })),
   ];
 
-  const dataFormatada = new Date(criadoEm).toLocaleDateString("pt-BR", { day: "2-digit", month: "long", year: "numeric" });
+  const dataFormatada = new Date(criadoEm ?? snapshot.gerado_em).toLocaleDateString("pt-BR", { day: "2-digit", month: "long", year: "numeric" });
   const local = snapshot.cliente?.cidade ? snapshot.cliente.cidade : "Feira de Santana";
 
   return (
@@ -199,7 +199,7 @@ export async function GET(_req: NextRequest, { params }: { params: Promise<{ id:
     <PropostaPdf numero={proposta.numero} snapshot={proposta.snapshot} criadoEm={proposta.criado_em} />
   );
 
-  return new NextResponse(buffer, {
+  return new NextResponse(new Uint8Array(buffer), {
     headers: {
       "Content-Type": "application/pdf",
       "Content-Disposition": `inline; filename="proposta-${proposta.numero}.pdf"`,

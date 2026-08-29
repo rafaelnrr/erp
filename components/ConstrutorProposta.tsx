@@ -434,7 +434,7 @@ export function ConstrutorProposta({
                     className="w-full rounded-lg border p-2.5 text-sm"
                   />
                   <span className="mt-1 block text-[11px] text-gray-400">
-                    Aparece no PDF como "À Vista" — valor com desconto sobre o investimento total.
+                    Aparece no PDF como &quot;À Vista&quot; — valor com desconto sobre o investimento total.
                   </span>
                 </div>
                 {!travado && (

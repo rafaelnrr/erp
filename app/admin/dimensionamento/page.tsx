@@ -203,7 +203,7 @@ export default function DimensionamentoPage() {
 
             {!erros.length && !resultado && (
               <div className="mt-2 p-3.5 rounded-xl bg-[#172033] text-[#cbd5e1] text-[13px]">
-                Preencha os dados e clique em "Dimensionamento Inteligente".
+                Preencha os dados e clique em &quot;Dimensionamento Inteligente&quot;.
               </div>
             )}
 
