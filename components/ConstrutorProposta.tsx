@@ -12,7 +12,7 @@ import {
   removerServicoProposta,
 } from "@/app/actions/propostas";
 import { CalculadoraSolarEmbutida } from "@/components/CalculadoraSolarEmbutida";
-import { ProdutoCombobox } from "@/components/ProdutoCombobox";
+import { ModalCatalogoProdutos } from "@/components/ModalCatalogoProdutos";
 import { usePerfil } from "@/hooks/usePerfil";
 
 interface Item {
@@ -81,6 +81,7 @@ export function ConstrutorProposta({
   const [itens, setItens] = useState<Item[]>(itensIniciais.map((i) => ({ ...i, preco_catalogo: (i as any).preco_catalogo ?? i.preco_unitario })));
   const [servicos, setServicos] = useState<ServicoProposta[]>(servicosIniciais);
   const [dimensionadorAberto, setDimensionadorAberto] = useState(false);
+  const [modalCatalogoAberto, setModalCatalogoAberto] = useState(false);
 
   const [condicoesPagamento, setCondicoesPagamento] = useState(propostaInicial.condicoes_pagamento ?? "");
   const [formaPagamento, setFormaPagamento] = useState<"avista" | "financiado">(propostaInicial.forma_pagamento ?? "avista");
@@ -123,28 +124,30 @@ export function ConstrutorProposta({
     setDimensionadorAberto(false);
   }
 
-  async function handleAdicionarProduto(p: Produto) {
-    const res = await adicionarItemProposta(propostaId, {
-      produto_id: p.id,
-      categoria: p.categoria,
-      descricao: `${p.fabricantes?.nome ?? ""} ${p.atributos?.modelo ?? p.sku}`.trim(),
-      quantidade: 1,
-      preco_unitario: 0,
-    });
-    if (res.success) {
-      setItens((prev) => [
-        ...prev,
-        {
-          id: crypto.randomUUID(),
-          categoria: p.categoria,
-          descricao: `${p.fabricantes?.nome ?? ""} ${p.atributos?.modelo ?? p.sku}`.trim(),
-          quantidade: 1,
-          preco_unitario: 0,
-          preco_catalogo: 0,
-        },
-      ]);
-      router.refresh();
-    }
+  async function handleAdicionarProdutos(produtosSelecionados: Produto[]) {
+    const promises = produtosSelecionados.map((p) =>
+      adicionarItemProposta(propostaId, {
+        produto_id: p.id,
+        categoria: p.categoria,
+        descricao: `${p.fabricantes?.nome ?? ""} ${p.atributos?.modelo ?? p.sku}`.trim(),
+        quantidade: 1,
+        preco_unitario: 0,
+      })
+    );
+    await Promise.all(promises);
+    setItens((prev) => [
+      ...prev,
+      ...produtosSelecionados.map((p) => ({
+        id: crypto.randomUUID(),
+        categoria: p.categoria,
+        descricao: `${p.fabricantes?.nome ?? ""} ${p.atributos?.modelo ?? p.sku}`.trim(),
+        quantidade: 1,
+        preco_unitario: 0,
+        preco_catalogo: 0,
+      })),
+    ]);
+    setModalCatalogoAberto(false);
+    router.refresh();
   }
 
   async function handleQuantidade(item: Item, quantidade: number) {
@@ -327,7 +330,12 @@ export function ConstrutorProposta({
                   </div>
                   {!travado && (
                     <div className="border-t border-slate-200 p-3">
-                      <ProdutoCombobox produtos={catalogoProdutos as any} onSelecionar={handleAdicionarProduto} />
+                      <button
+                        onClick={() => setModalCatalogoAberto(true)}
+                        className="w-full rounded-lg border border-dashed border-slate-300 py-3 text-sm font-medium text-slate-600 hover:bg-slate-50 transition-colors"
+                      >
+                        + Adicionar item do catálogo
+                      </button>
                     </div>
                   )}
                 </div>
@@ -496,6 +504,14 @@ export function ConstrutorProposta({
           )}
         </aside>
       </div>
+
+      {modalCatalogoAberto && (
+        <ModalCatalogoProdutos
+          produtos={catalogoProdutos as any}
+          onAdicionar={handleAdicionarProdutos as any}
+          onFechar={() => setModalCatalogoAberto(false)}
+        />
+      )}
 
       {dimensionadorAberto && (
         <div className="fixed inset-0 z-50 flex justify-end bg-black/50">
