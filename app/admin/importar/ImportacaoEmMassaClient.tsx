@@ -6,11 +6,15 @@ import { ImportadorPlanilha } from "@/components/ImportadorPlanilha";
 import { importarPlanilhaProdutos } from "@/app/actions/importarProdutos";
 import { importarPlanilhaServicos } from "@/app/actions/importarServicos";
 import { importarPlanilhaFabricantes } from "@/app/actions/importarFabricantes";
+import { importarPlanilhaFornecedores } from "@/app/actions/importarFornecedores";
+import { importarPlanilhaConcessionarias } from "@/app/actions/importarConcessionarias";
 
 const ABAS = [
   { id: "produtos", label: "Produtos" },
   { id: "servicos", label: "Serviços" },
   { id: "fabricantes", label: "Fabricantes" },
+  { id: "fornecedores", label: "Fornecedores" },
+  { id: "concessionarias", label: "Concessionárias" },
 ] as const;
 
 type AbaId = (typeof ABAS)[number]["id"];
@@ -24,7 +28,7 @@ export function ImportacaoEmMassaClient() {
         <div>
           <h1 className="text-xl font-semibold text-slate-800 dark:text-slate-100">Importação em Massa</h1>
           <p className="text-sm text-slate-500 dark:text-slate-400">
-            Adicione produtos, serviços ou fabricantes em lote a partir de uma planilha .xlsx ou .csv.
+            Adicione produtos, serviços, fabricantes, fornecedores ou concessionárias em lote a partir de uma planilha .xlsx ou .csv.
           </p>
         </div>
         <ThemeToggle />
@@ -65,6 +69,20 @@ export function ImportacaoEmMassaClient() {
           descricao="Envie um .xlsx ou .csv com uma coluna Nome. Fabricantes com nome já existente são ignorados (não há outros dados para atualizar); os demais são criados."
           templateUrl="/api/fabricantes/template"
           acao={importarPlanilhaFabricantes}
+        />
+      )}
+      {aba === "fornecedores" && (
+        <ImportadorPlanilha
+          descricao="Envie um .xlsx ou .csv com a coluna Nome (obrigatória) e, opcionalmente, Documento, Telefone e Email. Fornecedores com nome já existente são atualizados; os demais são criados."
+          templateUrl="/api/fornecedores/template"
+          acao={importarPlanilhaFornecedores}
+        />
+      )}
+      {aba === "concessionarias" && (
+        <ImportadorPlanilha
+          descricao="Envie um .xlsx ou .csv com uma coluna Nome. Concessionárias com nome já existente são ignoradas (não há outros dados para atualizar); as demais são criadas."
+          templateUrl="/api/concessionarias/template"
+          acao={importarPlanilhaConcessionarias}
         />
       )}
     </main>

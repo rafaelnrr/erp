@@ -78,7 +78,7 @@ export default async function PerfilClientePage({ params }: { params: Promise<{ 
           <Campo label="CPF / CNPJ" valor={c.documento} />
           <Campo label="Consumo Médio" valor={c.consumo_kwh_mes != null ? `${c.consumo_kwh_mes} kWh/mês` : null} />
           <Campo label="Zona" valor={LABEL_ZONA[c.zona] ?? c.zona} />
-          <Campo label="Concessionária" valor={c.concessionaria} />
+          <Campo label="Concessionária" valor={c.concessionarias?.nome} />
         </Painel>
 
         <Painel titulo="Endereço">

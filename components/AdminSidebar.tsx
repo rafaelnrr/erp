@@ -17,6 +17,8 @@ import {
   LogOut,
   Menu,
   X,
+  Truck,
+  Plug,
 } from "lucide-react";
 import { sair } from "@/app/actions/auth";
 
@@ -28,6 +30,8 @@ const ICONES = {
   produtos: Package,
   servicos: Wrench,
   fabricantes: Factory,
+  fornecedores: Truck,
+  concessionarias: Plug,
   estoque: Warehouse,
   importar: Upload,
   config: Settings,

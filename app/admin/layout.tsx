@@ -14,6 +14,7 @@ const NAV: NavGrupo[] = [
       { href: "/admin/clientes", label: "Gestão de Clientes", icone: "clientes" },
       { href: "/admin/propostas", label: "Orçamentos e Propostas", icone: "propostas" },
       { href: "/admin/dimensionamento", label: "Dimensionamento Inteligente", icone: "dimensionamento" },
+      { href: "/admin/concessionarias", label: "Concessionárias", icone: "concessionarias" },
     ],
   },
   {
@@ -23,6 +24,7 @@ const NAV: NavGrupo[] = [
       { href: "/admin/catalogo", label: "Catálogo de Produtos", icone: "produtos" },
       { href: "/admin/servicos", label: "Catálogo de Serviços", icone: "servicos" },
       { href: "/admin/fabricantes", label: "Fabricantes", icone: "fabricantes" },
+      { href: "/admin/fornecedores", label: "Fornecedores", icone: "fornecedores" },
       { href: "/admin/estoque", label: "Estoque & Preços", icone: "estoque" },
       { href: "/admin/importar", label: "Importação em Massa", icone: "importar" },
     ],

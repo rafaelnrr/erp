@@ -22,6 +22,9 @@ const ALIASES: Record<string, string[]> = {
   custointerno: ["custointerno", "custo"],
   precovenda: ["precovenda", "precopadrao", "precodevenda"],
   ativo: ["ativo", "status"],
+  documento: ["documento", "cnpj", "cpf", "cpfcnpj"],
+  telefone: ["telefone", "fone", "celular", "whatsapp"],
+  email: ["email", "emailfornecedor"],
 };
 
 /** Mapeia cabeçalhos de uma planilha (em qualquer ordem/grafia) para as chaves canônicas conhecidas. */

@@ -21,7 +21,7 @@ export async function criarCliente(formData: FormData) {
   const cidade = (formData.get("cidade") as string) || null;
   const uf = (formData.get("uf") as string) || null;
   const zona = (formData.get("zona") as string) || "urbana";
-  const concessionaria = (formData.get("concessionaria") as string) || null;
+  const concessionariaId = (formData.get("concessionaria_id") as string) || null;
   const tipoTelhado = (formData.get("tipo_telhado") as string) || null;
   const estruturaTelhado = (formData.get("estrutura_telhado") as string) || null;
   const observacoes = (formData.get("observacoes") as string) || null;
@@ -48,7 +48,7 @@ export async function criarCliente(formData: FormData) {
       cidade,
       uf,
       zona,
-      concessionaria,
+      concessionaria_id: concessionariaId,
       tipo_telhado: tipoTelhado,
       estrutura_telhado: estruturaTelhado,
       observacoes,
@@ -113,7 +113,7 @@ export async function editarCliente(id: string, formData: FormData) {
   const cidade = (formData.get("cidade") as string) || null;
   const uf = (formData.get("uf") as string) || null;
   const zona = (formData.get("zona") as string) || "urbana";
-  const concessionaria = (formData.get("concessionaria") as string) || null;
+  const concessionariaId = (formData.get("concessionaria_id") as string) || null;
   const tipoTelhado = (formData.get("tipo_telhado") as string) || null;
   const estruturaTelhado = (formData.get("estrutura_telhado") as string) || null;
   const observacoes = (formData.get("observacoes") as string) || null;
@@ -139,7 +139,7 @@ export async function editarCliente(id: string, formData: FormData) {
       cidade,
       uf,
       zona,
-      concessionaria,
+      concessionaria_id: concessionariaId,
       tipo_telhado: tipoTelhado,
       estrutura_telhado: estruturaTelhado,
       observacoes,
@@ -190,7 +190,10 @@ export async function excluirCliente(id: string) {
 
 export async function listarClientes() {
   const supabase = await createClient();
-  const { data, error } = await supabase.from("clientes").select("*").order("nome", { ascending: true });
+  const { data, error } = await supabase
+    .from("clientes")
+    .select("*, concessionarias(nome)")
+    .order("nome", { ascending: true });
 
   return { ok: !error, data: data || [], error: error?.message };
 }
@@ -222,7 +225,7 @@ const VALIDADE_URL_ASSINADA_SEG = 60 * 60; // 1h — só para exibir/baixar na t
 export async function buscarClienteCompleto(id: string): Promise<ClienteCompleto | null> {
   const supabase = await createClient();
 
-  const { data: cliente, error } = await supabase.from("clientes").select("*").eq("id", id).single();
+  const { data: cliente, error } = await supabase.from("clientes").select("*, concessionarias(nome)").eq("id", id).single();
   if (error || !cliente) return null;
 
   const { data: fotosRaw } = await supabase

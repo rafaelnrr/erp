@@ -52,7 +52,7 @@ export type Database = {
           cep: string | null
           cidade: string | null
           classe_b: string | null
-          concessionaria: string | null
+          concessionaria_id: string | null
           consumo_kwh_mes: number | null
           documento: string | null
           estrutura_telhado: string | null
@@ -78,7 +78,7 @@ export type Database = {
           cep?: string | null
           cidade?: string | null
           classe_b?: string | null
-          concessionaria?: string | null
+          concessionaria_id?: string | null
           consumo_kwh_mes?: number | null
           documento?: string | null
           estrutura_telhado?: string | null
@@ -104,7 +104,7 @@ export type Database = {
           cep?: string | null
           cidade?: string | null
           classe_b?: string | null
-          concessionaria?: string | null
+          concessionaria_id?: string | null
           consumo_kwh_mes?: number | null
           documento?: string | null
           estrutura_telhado?: string | null
@@ -127,6 +127,13 @@ export type Database = {
         }
         Relationships: [
           {
+            foreignKeyName: "clientes_concessionaria_id_fkey"
+            columns: ["concessionaria_id"]
+            isOneToOne: false
+            referencedRelation: "concessionarias"
+            referencedColumns: ["id"]
+          },
+          {
             foreignKeyName: "clientes_vendedor_id_fkey"
             columns: ["vendedor_id"]
             isOneToOne: false
@@ -134,6 +141,24 @@ export type Database = {
             referencedColumns: ["id"]
           },
         ]
+      }
+      concessionarias: {
+        Row: {
+          created_at: string
+          id: string
+          nome: string
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          nome: string
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          nome?: string
+        }
+        Relationships: []
       }
       dimensionamentos: {
         Row: {
@@ -249,6 +274,33 @@ export type Database = {
           created_at?: string
           id?: string
           nome?: string
+        }
+        Relationships: []
+      }
+      fornecedores: {
+        Row: {
+          created_at: string
+          documento: string | null
+          email: string | null
+          id: string
+          nome: string
+          telefone: string | null
+        }
+        Insert: {
+          created_at?: string
+          documento?: string | null
+          email?: string | null
+          id?: string
+          nome: string
+          telefone?: string | null
+        }
+        Update: {
+          created_at?: string
+          documento?: string | null
+          email?: string | null
+          id?: string
+          nome?: string
+          telefone?: string | null
         }
         Relationships: []
       }

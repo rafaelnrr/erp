@@ -3,6 +3,7 @@
 import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import { criarCliente, editarCliente, listarValoresDistintos } from "@/app/actions/clientes";
+import { listarConcessionarias, criarConcessionaria, type Concessionaria } from "@/app/actions/concessionarias";
 import { buscarEnderecoPorCep } from "@/utils/cep";
 import { CreatableSelect } from "@/components/CreatableSelect";
 import { FileDropzone } from "@/components/FileDropzone";
@@ -10,11 +11,10 @@ import { SiteSurveyUpload, type FotoSurvey } from "@/components/SiteSurveyUpload
 import { usePerfil } from "@/hooks/usePerfil";
 import type { Tables } from "@/types/supabase";
 
-type ClienteExistente = Tables<"clientes">;
+type ClienteExistente = Tables<"clientes"> & { concessionarias?: { nome: string } | null };
 
 const TIPOS_TELHADO_PADRAO = ["Cerâmica", "Fibra Cimento", "Metálico", "Laje", "Solo"];
 const ESTRUTURAS_PADRAO = ["Madeira", "Metálica"];
-const CONCESSIONARIAS_PADRAO = ["CPFL", "Enel", "Light", "Cemig", "Copel", "Coelba", "Celesc", "Equatorial", "Neoenergia"];
 
 const TABS_CRIAR = [
   { id: "dados", label: "① Dados" },
@@ -54,7 +54,8 @@ export function NovoClienteDrawer({ cliente }: { cliente?: ClienteExistente } = 
   const [zona, setZona] = useState<"urbana" | "rural">((cliente?.zona as "urbana" | "rural") ?? "urbana");
   const [cepStatus, setCepStatus] = useState<"idle" | "buscando" | "nao-encontrado">("idle");
 
-  const [concessionaria, setConcessionaria] = useState(cliente?.concessionaria ?? "");
+  const [concessionariaNome, setConcessionariaNome] = useState(cliente?.concessionarias?.nome ?? "");
+  const [concessionarias, setConcessionarias] = useState<Concessionaria[]>([]);
   const [tipoTelhado, setTipoTelhado] = useState(cliente?.tipo_telhado ?? "");
   const [estruturaTelhado, setEstruturaTelhado] = useState(cliente?.estrutura_telhado ?? "");
   const [fatura, setFatura] = useState<File | null>(null);
@@ -77,6 +78,9 @@ export function NovoClienteDrawer({ cliente }: { cliente?: ClienteExistente } = 
     if (!aberto) return;
     listarValoresDistintos("tipo_telhado").then(setTiposTelhadoExtra);
     listarValoresDistintos("estrutura_telhado").then(setEstruturasExtra);
+    listarConcessionarias().then((res) => {
+      if (res.ok) setConcessionarias(res.data);
+    });
   }, [aberto]);
 
   async function handleCepBlur() {
@@ -100,7 +104,7 @@ export function NovoClienteDrawer({ cliente }: { cliente?: ClienteExistente } = 
   function resetar() {
     setNome(cliente?.nome ?? ""); setDocumento(cliente?.documento ?? ""); setConsumo(cliente?.consumo_kwh_mes != null ? String(cliente.consumo_kwh_mes) : "");
     setCep(cliente?.cep ?? ""); setRua(cliente?.rua ?? ""); setNumero(cliente?.numero ?? ""); setBairro(cliente?.bairro ?? ""); setCidade(cliente?.cidade ?? ""); setUf(cliente?.uf ?? ""); setZona((cliente?.zona as "urbana" | "rural") ?? "urbana");
-    setConcessionaria(cliente?.concessionaria ?? ""); setTipoTelhado(cliente?.tipo_telhado ?? ""); setEstruturaTelhado(cliente?.estrutura_telhado ?? ""); setFatura(null); setObservacoes(cliente?.observacoes ?? "");
+    setConcessionariaNome(cliente?.concessionarias?.nome ?? ""); setTipoTelhado(cliente?.tipo_telhado ?? ""); setEstruturaTelhado(cliente?.estrutura_telhado ?? ""); setFatura(null); setObservacoes(cliente?.observacoes ?? "");
     setGrupoTarifario((cliente?.grupo_tarifario as "A" | "B") ?? ""); setClasseB(cliente?.classe_b ?? ""); setSubgrupoA(cliente?.subgrupo_a ?? ""); setModalidadeA(cliente?.modalidade_tarifaria_a ?? "");
     setTarifaKwh(cliente?.tarifa_kwh != null ? String(cliente.tarifa_kwh) : ""); setTarifaKwhPonta(cliente?.tarifa_kwh_ponta != null ? String(cliente.tarifa_kwh_ponta) : ""); setTarifaKwhForaPonta(cliente?.tarifa_kwh_fora_ponta != null ? String(cliente.tarifa_kwh_fora_ponta) : "");
     setFotos([]); setAba("dados"); setErro(null);
@@ -110,6 +114,24 @@ export function NovoClienteDrawer({ cliente }: { cliente?: ClienteExistente } = 
     if (!podeSalvar) return;
     setSalvando(true);
     setErro(null);
+
+    let concessionariaId = "";
+    const nomeAlvo = concessionariaNome.trim();
+    if (nomeAlvo !== "") {
+      const existente = concessionarias.find((c) => c.nome.toLowerCase() === nomeAlvo.toLowerCase());
+      if (existente) {
+        concessionariaId = existente.id;
+      } else {
+        const criada = await criarConcessionaria(nomeAlvo);
+        if (!criada.ok) {
+          setSalvando(false);
+          setErro(criada.error);
+          return;
+        }
+        concessionariaId = criada.data.id;
+        setConcessionarias((prev) => [...prev, criada.data]);
+      }
+    }
 
     const fd = new FormData();
     fd.set("nome", nome);
@@ -122,7 +144,7 @@ export function NovoClienteDrawer({ cliente }: { cliente?: ClienteExistente } = 
     fd.set("cidade", cidade);
     fd.set("uf", uf);
     fd.set("zona", zona);
-    fd.set("concessionaria", concessionaria);
+    fd.set("concessionaria_id", concessionariaId);
     fd.set("tipo_telhado", tipoTelhado);
     fd.set("estrutura_telhado", estruturaTelhado);
     fd.set("observacoes", observacoes);
@@ -225,9 +247,9 @@ export function NovoClienteDrawer({ cliente }: { cliente?: ClienteExistente } = 
                   </div>
                   <CreatableSelect
                     label="Concessionária"
-                    value={concessionaria}
-                    onChange={setConcessionaria}
-                    options={CONCESSIONARIAS_PADRAO}
+                    value={concessionariaNome}
+                    onChange={setConcessionariaNome}
+                    options={concessionarias.map((c) => c.nome)}
                     placeholder="Selecione ou digite..."
                   />
                   <div>
