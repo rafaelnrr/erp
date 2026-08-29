@@ -258,8 +258,9 @@ export function ConstrutorProposta({
                   )}
                 </div>
 
-                <div className="overflow-hidden rounded-lg border border-slate-200">
-                  <table className="w-full text-sm">
+                <div className="rounded-lg border border-slate-200 bg-white">
+                  <div className="overflow-x-auto rounded-t-lg">
+                    <table className="w-full text-sm">
                     <thead className="bg-slate-50">
                       <tr>
                         <th className="px-3 py-2.5 text-left font-medium text-slate-500">Produto</th>
@@ -323,6 +324,7 @@ export function ConstrutorProposta({
                       })}
                     </tbody>
                   </table>
+                  </div>
                   {!travado && (
                     <div className="border-t border-slate-200 p-3">
                       <ProdutoCombobox produtos={catalogoProdutos as any} onSelecionar={handleAdicionarProduto} />
