@@ -79,7 +79,7 @@ export function ModalCatalogoProdutos({ produtos, onAdicionar, onFechar }: Modal
 
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center bg-slate-900/50 backdrop-blur-sm p-4">
-      <div className="flex h-full max-h-[700px] w-full max-w-4xl flex-col overflow-hidden rounded-2xl bg-white shadow-2xl">
+      <div className="flex h-full max-h-[700px] w-full max-w-4xl flex-col overflow-hidden rounded-2xl bg-white dark:bg-slate-900 shadow-2xl">
         {/* Cabeçalho */}
         <div className="flex items-center justify-between border-b border-slate-200 px-6 py-4">
           <h2 className="text-xl font-bold text-slate-800">Catálogo de Equipamentos</h2>
@@ -91,7 +91,7 @@ export function ModalCatalogoProdutos({ produtos, onAdicionar, onFechar }: Modal
         </div>
 
         {/* Busca */}
-        <div className="border-b border-slate-200 bg-slate-50 px-6 py-4">
+        <div className="border-b border-slate-200 bg-slate-50 dark:bg-slate-800 px-6 py-4">
           <div className="relative">
             <svg className="pointer-events-none absolute left-3 top-1/2 h-5 w-5 -translate-y-1/2 text-slate-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 21l-4.35-4.35M17 10.5A6.5 6.5 0 1 1 4 10.5a6.5 6.5 0 0 1 13 0Z" />
@@ -107,9 +107,9 @@ export function ModalCatalogoProdutos({ produtos, onAdicionar, onFechar }: Modal
         </div>
 
         {/* Tabela */}
-        <div className="flex-1 overflow-auto bg-white">
-          <table className="w-full text-left text-sm">
-            <thead className="sticky top-0 bg-slate-50 shadow-sm ring-1 ring-slate-200 z-10">
+        <div className="flex-1 overflow-auto bg-white dark:bg-slate-900">
+          <table className="table-standard">
+            <thead className="sticky top-0 shadow-sm ring-1 ring-slate-200 dark:ring-slate-700 z-10 bg-slate-50 dark:bg-slate-800 dark:bg-slate-800">
               <tr>
                 <th className="w-14 px-4 py-3 text-center">
                   <input
@@ -135,7 +135,7 @@ export function ModalCatalogoProdutos({ produtos, onAdicionar, onFechar }: Modal
                 itensPaginados.map((p) => (
                   <tr 
                     key={p.id} 
-                    className={`transition-colors cursor-pointer ${selecionados.has(p.id) ? 'bg-blue-50/50' : 'hover:bg-slate-50'}`}
+                    className={`transition-colors cursor-pointer ${selecionados.has(p.id) ? 'bg-blue-50/50' : 'hover:bg-slate-50 dark:bg-slate-800'}`}
                     onClick={() => toggleSelecao(p.id)}
                   >
                     <td className="px-4 py-3 text-center" onClick={(e) => e.stopPropagation()}>
@@ -168,13 +168,13 @@ export function ModalCatalogoProdutos({ produtos, onAdicionar, onFechar }: Modal
         </div>
 
         {/* Paginação e Rodapé */}
-        <div className="flex items-center justify-between border-t border-slate-200 bg-white px-6 py-4">
+        <div className="flex items-center justify-between border-t border-slate-200 bg-white dark:bg-slate-900 px-6 py-4">
           <div className="flex items-center gap-6">
             <div className="flex items-center gap-2">
               <button
                 disabled={pagina === 1}
                 onClick={() => setPagina((p) => Math.max(1, p - 1))}
-                className="rounded-md border border-slate-200 px-3 py-1.5 text-sm font-medium text-slate-600 hover:bg-slate-50 disabled:opacity-50 disabled:cursor-not-allowed"
+                className="rounded-md border border-slate-200 px-3 py-1.5 text-sm font-medium text-slate-600 hover:bg-slate-50 dark:bg-slate-800 disabled:opacity-50 disabled:cursor-not-allowed"
               >
                 Anterior
               </button>
@@ -184,7 +184,7 @@ export function ModalCatalogoProdutos({ produtos, onAdicionar, onFechar }: Modal
               <button
                 disabled={pagina >= totalPaginas}
                 onClick={() => setPagina((p) => Math.min(totalPaginas, p + 1))}
-                className="rounded-md border border-slate-200 px-3 py-1.5 text-sm font-medium text-slate-600 hover:bg-slate-50 disabled:opacity-50 disabled:cursor-not-allowed"
+                className="rounded-md border border-slate-200 px-3 py-1.5 text-sm font-medium text-slate-600 hover:bg-slate-50 dark:bg-slate-800 disabled:opacity-50 disabled:cursor-not-allowed"
               >
                 Próxima
               </button>

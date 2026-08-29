@@ -17,7 +17,7 @@ export default async function AdminLayout({ children }: { children: ReactNode })
   const nav = NAV.filter((item) => !item.somenteAdmin || role === "admin");
 
   return (
-    <div className="flex min-h-screen bg-slate-50">
+    <div className="flex min-h-screen bg-slate-50 dark:bg-slate-900">
       <aside className="w-64 shrink-0 bg-slate-900 border-r border-slate-800 p-5 flex flex-col sticky top-0 h-screen overflow-y-auto">
         <div className="mb-8 flex items-center gap-2 px-2">
           <span className="text-emerald-400 text-xl">☀</span>

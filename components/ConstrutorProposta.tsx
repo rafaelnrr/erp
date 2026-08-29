@@ -263,8 +263,8 @@ export function ConstrutorProposta({
 
                 <div className="rounded-lg border border-slate-200 bg-white">
                   <div className="overflow-x-auto rounded-t-lg">
-                    <table className="w-full text-sm">
-                    <thead className="bg-slate-50">
+                    <table className="table-standard">
+                    <thead  >
                       <tr>
                         <th className="px-3 py-2.5 text-left font-medium text-slate-500">Produto</th>
                         <th className="w-20 px-3 py-2.5 text-right font-medium text-slate-500">Qtd.</th>
