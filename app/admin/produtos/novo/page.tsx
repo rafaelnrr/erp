@@ -48,7 +48,7 @@ function NovoFabricanteModal({
           <button
             onClick={salvar}
             disabled={salvando}
-            className="px-3 py-1.5 text-sm rounded-lg bg-blue-600 text-white font-semibold disabled:opacity-50"
+            className="btn-primary"
           >
             {salvando ? "Salvando..." : "Salvar"}
           </button>
@@ -129,7 +129,7 @@ export default function NovoProdutoPage() {
 
         <input name="modelo" placeholder="Modelo" required className="rounded border p-2 text-sm" />
         <input name="potencia_w" type="number" placeholder="Potência (Wp) - Apenas Módulo/Inversor" className="rounded border p-2 text-sm" />
-        <button type="submit" disabled={loading} className="mt-4 rounded bg-blue-600 p-2 text-sm font-semibold text-white hover:bg-blue-700 disabled:opacity-50">
+        <button type="submit" disabled={loading} className="btn-primary">
           {loading ? "Salvando..." : "Salvar Produto no Catálogo"}
         </button>
       </form>

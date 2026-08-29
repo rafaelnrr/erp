@@ -17,9 +17,6 @@ export default function RootLayout({
     <html lang="pt-BR" suppressHydrationWarning>
       <body className="antialiased">
         <ThemeProvider attribute="class" defaultTheme="system" enableSystem disableTransitionOnChange>
-          <div className="absolute top-4 right-4 z-[9999]">
-            <ThemeToggle />
-          </div>
           {children}
         </ThemeProvider>
       </body>

@@ -115,7 +115,7 @@ export function ServicoDrawer({ servicoEditar, onClose }: ServicoDrawerProps) {
           <button
             onClick={handleSalvar}
             disabled={salvando || !nome.trim() || !precoPadrao}
-            className="px-4 py-1.5 text-sm rounded-lg bg-blue-600 text-white font-semibold disabled:opacity-50"
+            className="btn-primary"
           >
             {salvando ? "Salvando..." : "Salvar Serviço"}
           </button>

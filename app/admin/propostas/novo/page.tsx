@@ -92,7 +92,7 @@ export default function NovaPropostaPage() {
         <button
           onClick={handleCriar}
           disabled={!clienteSelecionado || criando}
-          className="mt-2 rounded-lg bg-blue-600 px-4 py-2.5 text-sm font-semibold text-white hover:bg-blue-700 disabled:opacity-50"
+          className="btn-primary"
         >
           {criando ? "Criando..." : "Criar e Continuar"}
         </button>

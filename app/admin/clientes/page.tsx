@@ -1,5 +1,6 @@
 import { listarClientes } from "@/app/actions/clientes";
 import { NovoClienteDrawer } from "@/components/NovoClienteDrawer";
+import { ThemeToggle } from "@/components/ThemeToggle";
 
 export default async function ClientesPage() {
   const result = await listarClientes();
@@ -8,8 +9,11 @@ export default async function ClientesPage() {
   return (
     <main className="p-8">
       <div className="mb-6 flex items-center justify-between">
-        <h1 className="text-xl font-semibold">Gestão de Clientes</h1>
-        <NovoClienteDrawer />
+        <h1 className="text-2xl font-semibold text-slate-800 dark:text-slate-100">Gestão de Clientes</h1>
+        <div className="flex items-center gap-4">
+          <ThemeToggle />
+          <NovoClienteDrawer />
+        </div>
       </div>
 
       <div className="overflow-hidden rounded-lg border bg-white shadow-sm">

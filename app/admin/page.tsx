@@ -1,4 +1,5 @@
 import { createClient } from "@/utils/supabase/server";
+import { ThemeToggle } from "@/components/ThemeToggle";
 
 export default async function DashboardPage() {
   const supabase = await createClient();
@@ -72,13 +73,18 @@ export default async function DashboardPage() {
   return (
     <main className="p-8">
       {/* Cabeçalho */}
-      <div className="mb-8">
+      <div className="mb-8 flex items-center justify-between">
+        <div>
         <h1 className="text-3xl font-bold text-slate-800 dark:text-slate-100">
           Olá, {userName}! 👋
         </h1>
         <p className="mt-2 text-sm font-medium text-slate-500 dark:text-slate-400">
           Bem-vindo ao seu painel do SolarFlow Pro. Aqui está o resumo das suas operações.
         </p>
+        </div>
+        <div className="flex items-center gap-4">
+          <ThemeToggle />
+        </div>
       </div>
 
       {/* Grid de KPIs */}

@@ -2,6 +2,7 @@ import Link from "next/link";
 import { listarPropostas } from "@/app/actions/propostas";
 import { StatusPropostaSelect } from "@/components/StatusPropostaSelect";
 import { obterMeuPapel } from "@/app/actions/perfis";
+import { ThemeToggle } from "@/components/ThemeToggle";
 
 const LABEL_STATUS: Record<string, string> = {
   gerada: "Gerada",
@@ -20,19 +21,22 @@ export default async function PropostasPage() {
     <main className="p-8">
       <div className="mb-6 flex items-center justify-between">
         <div>
-          <h1 className="text-xl font-semibold text-gray-800">Orçamentos e Propostas</h1>
+          <h1 className="text-2xl font-semibold text-slate-800 dark:text-slate-100">Orçamentos e Propostas</h1>
           <p className="mt-1 text-sm text-gray-500">
             Escolha um cliente e monte a proposta — o dimensionamento pode ser feito dentro dela.
           </p>
         </div>
-        {podeEditar && (
-          <Link
-            href="/admin/propostas/novo"
-            className="rounded-lg bg-blue-600 px-4 py-2 text-sm font-semibold text-white hover:bg-blue-700"
-          >
-            + Nova Proposta
-          </Link>
-        )}
+        <div className="flex items-center gap-4">
+          <ThemeToggle />
+          {podeEditar && (
+            <Link
+              href="/admin/propostas/novo"
+              className="btn-primary"
+            >
+              + Nova Proposta
+            </Link>
+          )}
+        </div>
       </div>
 
       <div className="overflow-hidden rounded-lg border bg-white shadow-sm">

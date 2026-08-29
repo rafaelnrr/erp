@@ -203,7 +203,7 @@ export function ModalCatalogoProdutos({ produtos, onAdicionar, onFechar }: Modal
             <button
               onClick={handleSalvar}
               disabled={selecionados.size === 0}
-              className="rounded-lg bg-blue-600 px-6 py-2 text-sm font-semibold text-white shadow-sm hover:bg-blue-700 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+              className="btn-primary"
             >
               Adicionar Selecionados
             </button>

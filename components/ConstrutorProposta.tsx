@@ -374,7 +374,7 @@ export function ConstrutorProposta({
                         ))}
                       </select>
                     </div>
-                    <button onClick={handleAdicionarServico} className="rounded-lg bg-blue-600 px-4 py-2.5 text-sm font-semibold text-white">
+                    <button onClick={handleAdicionarServico} className="btn-primary">
                       Adicionar
                     </button>
                   </div>
@@ -488,7 +488,7 @@ export function ConstrutorProposta({
             <button
               onClick={handleFinalizar}
               disabled={travado || finalizando || itens.length === 0}
-              className="mt-4 w-full rounded-lg bg-emerald-600 px-4 py-3 text-sm font-semibold text-white hover:bg-emerald-700 disabled:opacity-50"
+              className="btn-primary w-full mt-4 py-3"
             >
               {finalizando ? "Finalizando..." : "Finalizar e Gerar PDF"}
             </button>
@@ -497,7 +497,7 @@ export function ConstrutorProposta({
               href={`/api/propostas/${propostaId}/pdf`}
               target="_blank"
               rel="noopener noreferrer"
-              className="mt-4 block w-full text-center rounded-lg bg-emerald-600 px-4 py-3 text-sm font-semibold text-white hover:bg-emerald-700"
+              className="btn-primary w-full mt-4 py-3"
             >
               Abrir PDF
             </a>

@@ -1,5 +1,6 @@
 import Link from "next/link";
 import { listarProdutos, type Produto } from "@/app/actions/produtos";
+import { ThemeToggle } from "@/components/ThemeToggle";
 
 const LABEL_CATEGORIA: Record<Produto["categoria"], string> = {
   modulo: "Módulo",
