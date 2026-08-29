@@ -3,6 +3,7 @@ import { listarProdutos, type Produto } from "@/app/actions/produtos";
 import { obterMeuPapel } from "@/app/actions/perfis";
 import { ThemeToggle } from "@/components/ThemeToggle";
 import { ExcluirProdutoButton } from "@/components/ExcluirProdutoButton";
+import { ImportarProdutosModal } from "@/components/ImportarProdutosModal";
 
 const LABEL_CATEGORIA: Record<Produto["categoria"], string> = {
   modulo: "Módulo",
@@ -34,8 +35,9 @@ export default async function CatalogoPage() {
           <h1 className="text-xl font-semibold text-slate-800 dark:text-slate-100">Catálogo de Produtos</h1>
           <p className="text-sm text-slate-500 dark:text-slate-400">Gerencie módulos, inversores e componentes</p>
         </div>
-        <div className="flex items-center gap-4">
+        <div className="flex items-center gap-3">
           <ThemeToggle />
+          {isAdmin && <ImportarProdutosModal />}
           <Link href="/admin/produtos/novo" className="btn-primary">
             + Novo Produto
           </Link>
@@ -43,10 +45,10 @@ export default async function CatalogoPage() {
       </div>
 
       {produtos.length === 0 ? (
-        <p className="text-slate-500 dark:text-slate-400">
-          Nenhum produto cadastrado ainda. Importe uma planilha Excel para
-          começar.
-        </p>
+        <div className="text-slate-500 dark:text-slate-400">
+          <p>Nenhum produto cadastrado ainda.</p>
+          {isAdmin && <p className="mt-1">Importe uma planilha Excel para começar, ou cadastre manualmente.</p>}
+        </div>
       ) : (
         <div className="overflow-x-auto rounded-lg border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 shadow-sm">
           <table className="table-standard">
